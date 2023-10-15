@@ -28,14 +28,18 @@ smtGT :: SumFactor -> SumFactor -> String
 smtGT x y = "(> " ++ smtSum x ++ " " ++ smtSum y ++ ")"
 
 smtOrdinalGT :: Ordinal -> Ordinal -> String
-smtOrdinalGT [] [] = ""
+smtOrdinalGT [] [] = "false"
 smtOrdinalGT x [] = "(or" ++ concatMap ((" " ++) . smtNEZero) x  ++ ")"
-smtOrdinalGT [] x = "(and " ++ concatMap ((" " ++) . smtEQZero) x  ++ ")"
+smtOrdinalGT [] x = "false"
 smtOrdinalGT [xh] [yh] = smtGT xh yh
 smtOrdinalGT (xh:xt) (yh:yt) = "(or (and " ++ smtGT xh yh ++ " " ++ "(not " ++ smtOrdinalGT yt xt ++ ")) " ++ smtOrdinalGT xt yt ++ ")"
 
 smtLinearPolynomialGT :: LinearPolynomial -> LinearPolynomial -> String
-smtLinearPolynomialGT (LinearPolynomial mj1 mr1) (LinearPolynomial mj2 mr2) = "(or " ++ smtOrdinalGT mj1 mj2 ++ " (and (not " ++ smtOrdinalGT mj2 mj1 ++ ") " ++ smtOrdinalGT mr1 mr2 ++ "))"
+smtLinearPolynomialGT (LinearPolynomial mj1 mn1) (LinearPolynomial mj2 mn2) =
+    "(or " ++
+    "(and (not " ++ smtOrdinalGT mn2 mn1 ++ ") " ++ smtOrdinalGT mj1 mj2 ++ ") " ++
+    "(and (not " ++ smtOrdinalGT mj2 mj1 ++ ") " ++ smtOrdinalGT mn1 mn2 ++ "))"
+
 
 smtDefine :: SimpleFactor -> String
 smtDefine f = "(declare-fun " ++ smtSimple f ++ " () Int)"

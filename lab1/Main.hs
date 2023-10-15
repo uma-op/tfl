@@ -65,4 +65,3 @@ lab1 statements =
             _ -> lab1 (statement:statements)
 
 main = lab1 []
-        
