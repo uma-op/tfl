@@ -8,7 +8,7 @@ import qualified Data.Bifunctor as Bifunctor
 import Text.Parsec.Char
 import Text.ParserCombinators.Parsec
 
-data Symbol = NTerm { value :: String } | Term { value :: String } deriving Eq
+data Symbol = NTerm { value :: String } | Term { value :: String } deriving (Eq, Show)
 
 isTerm (NTerm t) = False
 isTerm (Term t) = True
@@ -22,7 +22,7 @@ data GrammarRule =
     GrammarRule
         { lhs :: Symbol
         , rhs :: [Symbol] }
-    deriving Eq
+    deriving (Eq, Show)
 
 instance Ord GrammarRule where
     compare = Function.on compare (\r -> (lhs r, rhs r))
@@ -44,19 +44,17 @@ parseSymbol :: GenParser Char st String
 parseSymbol = many (noneOf " \n->")
 
 
-tideGrammarRules rawRules = tideGrammarRules' (Set.fromList $ List.map fst rawRules) [] rawRules
+shapeGrammarRules rawRules = List.reverse $ List.foldl (shapeGrammarRules' (Set.fromList $ List.map fst rawRules)) [] rawRules
     where
-        tideGrammarRules' nterms rules [] = rules
-        tideGrammarRules' nterms rules raw =
-            tideGrammarRules'
-                nterms
-                (Bifunctor.bimap
-                    NTerm
-                    (List.map (\x -> if x `List.elem` nterms then NTerm x else Term x))
-                    (head raw) : rules)
-                (tail raw)
+        shapeGrammarRules' nterms rules raw = GrammarRule {
+            lhs = toSymbol $ fst raw,
+            rhs = List.map toSymbol $ snd raw
+        } : rules
+            where
+                toSymbol s = if s `Set.member` nterms then NTerm s else Term s
 
-cleanGrammarRules startRule otherRules = cleanUnreachable $ cleanNonGenerative (Set.fromList (startRule : otherRules))
+
+cleanGrammarRules startRule otherRules = Set.toList $ cleanUnreachable $ cleanNonGenerative $ Set.fromList (startRule : otherRules)
     where
         cleanNonGenerative rules = rules Set.\\ nonGenerative terms rules
             where
@@ -64,10 +62,10 @@ cleanGrammarRules startRule otherRules = cleanUnreachable $ cleanNonGenerative (
 
                 nonGenerative :: Set.Set Symbol -> Set.Set GrammarRule -> Set.Set GrammarRule
                 nonGenerative generative unprocessed
-                    | Set.null newGenerative = unprocessed
+                    | Set.null newGenerative = stillNonGenerative
                     | otherwise = nonGenerative (Set.union generative newGenerative) stillNonGenerative
                     where
-                        isGenerative rule = List.any (`Set.member` generative) (Grammar.rhs rule)
+                        isGenerative rule = List.all (`Set.member` generative) (Grammar.rhs rule)
                         (newGenerative, stillNonGenerative) =
                             Bifunctor.first
                                 (Set.map lhs)
@@ -77,11 +75,10 @@ cleanGrammarRules startRule otherRules = cleanUnreachable $ cleanNonGenerative (
             where
                 unreachable :: Set.Set Symbol -> Set.Set GrammarRule -> Set.Set GrammarRule
                 unreachable reachable unprocessed
-                    | Set.null newReachable = unprocessed
+                    | Set.null newReachable = stillUnreachable
                     | otherwise = unreachable (Set.union reachable newReachable) stillUnreachable
                     where
                         isReachable rule = lhs rule `Set.member` reachable
-
 
                         (newReachable, stillUnreachable) =
                             Bifunctor.first

@@ -52,13 +52,14 @@ executable lab5
   hs-source-dirs:   src
   default-language: Haskell2010
 
-Test-Suite grammar-parser-test
+Test-Suite grammar-test
   type: exitcode-stdio-1.0
-  main-is: tests/GrammarParserTest.hs
+  main-is: tests/GrammarTest.hs
   other-modules: Paths_lab5
   autogen-modules: Paths_lab5
   data-files:
       testsuite/data/clear-grammar.txt
+    , testsuite/data/dirty-grammar.txt
   build-depends: 
       base 
     , test-framework
