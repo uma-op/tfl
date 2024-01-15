@@ -14,9 +14,9 @@ library uma-graph-stack
   exposed-modules: GraphStack
   other-modules: Grammar
   build-depends:
-      base >=4.17.2.0
-    , parsec >=3.1.16.1
-    , containers >=0.4.0.0
+      base 
+    , parsec
+    , containers
   hs-source-dirs: src
   default-language: Haskell2010
 
@@ -24,19 +24,19 @@ library uma-slr-analyzer
   exposed-modules: SLRAnalyzer
   other-modules: GraphStack, Grammar
   build-depends:
-      base >=4.17.2.0
-    , parsec >=3.1.16.1
+      base
+    , parsec
+    , containers
     , uma-graph-stack
-    , containers >=0.4.0.0
   hs-source-dirs: src
   default-language: Haskell2010
 
 library uma-grammar
   exposed-modules: Grammar
   build-depends:
-      base >=4.17.2.0
-    , parsec >=3.1.16.1
-    , containers >=0.4.0.0
+      base
+    , parsec
+    , containers
   hs-source-dirs: src
   default-language: Haskell2010
 
@@ -44,10 +44,26 @@ executable lab5
   main-is:          Main.hs
   other-modules: GraphStack, SLRAnalyzer, Grammar
   build-depends:
-      base >=4.17.2.0
-    , parsec >=3.1.16.1
-    , containers >=0.4.0.0
+      base
+    , parsec
+    , containers
     , uma-graph-stack
     , uma-slr-analyzer
   hs-source-dirs:   src
+  default-language: Haskell2010
+
+Test-Suite grammar-parser-test
+  type: exitcode-stdio-1.0
+  main-is: tests/GrammarParserTest.hs
+  other-modules: Paths_lab5
+  autogen-modules: Paths_lab5
+  data-files:
+      testsuite/data/clear-grammar.txt
+  build-depends: 
+      base 
+    , test-framework
+    , test-framework-hunit
+    , HUnit
+    , uma-grammar
+  hs-source-dirs: testsuite
   default-language: Haskell2010

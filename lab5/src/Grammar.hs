@@ -27,31 +27,28 @@ data GrammarRule =
 instance Ord GrammarRule where
     compare = Function.on compare (\r -> (lhs r, rhs r))
 
-whitespaces = skipMany $ oneOf " \n"
+parseGrammarRules = parse parseRules "(unknown)"
 
 parseRules :: GenParser Char st [(String, [String])]
-parseRules = endBy parseRule endOfLine
+parseRules = endBy parseRule (char '\n')
 
 parseRule :: GenParser Char st (String, [String])
 parseRule =
     do
-        whitespaces
         lhs <- parseSymbol
-        spaces
-        string "->"
-        spaces
-        rhs <- sepBy parseSymbol $ many $ noneOf " \n"
+        spaces >> string "->" >> spaces
+        rhs <- sepBy parseSymbol (char ' ')
         return (lhs, rhs)
 
 parseSymbol :: GenParser Char st String
-parseSymbol = many $ noneOf " \n"
+parseSymbol = many (noneOf " \n->")
 
 
-parseGrammarRules rawRules = parseGrammarRules' (Set.fromList $ List.map fst rawRules) [] rawRules
+tideGrammarRules rawRules = tideGrammarRules' (Set.fromList $ List.map fst rawRules) [] rawRules
     where
-        parseGrammarRules' nterms rules [] = rules
-        parseGrammarRules' nterms rules raw =
-            parseGrammarRules'
+        tideGrammarRules' nterms rules [] = rules
+        tideGrammarRules' nterms rules raw =
+            tideGrammarRules'
                 nterms
                 (Bifunctor.bimap
                     NTerm
