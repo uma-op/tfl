@@ -38,7 +38,6 @@ library uma-graph-stack
   exposed-modules: GraphStack
   build-depends:
       base 
-    , parsec
     , containers
     , uma-grammar
   hs-source-dirs: src/GraphStack
@@ -48,8 +47,6 @@ library uma-transitions
   exposed-modules: Transitions
   build-depends:
       base
-    , filepath
-    , parsec
     , containers
     , uma-grammar
   hs-source-dirs: src/Transitions
@@ -80,7 +77,6 @@ library uma-slr-analyzer
   exposed-modules: SLRAnalyzer
   build-depends:
       base
-    , parsec
     , containers
     , uma-grammar
     , uma-graph-stack
@@ -92,8 +88,6 @@ executable lab5
   main-is:          Main.hs
   build-depends:
       base
-    , parsec
-    , containers
     , uma-grammar
     , uma-transitions
     , uma-graph-stack
