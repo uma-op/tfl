@@ -31,6 +31,15 @@ data GrammarRule =
 instance Ord GrammarRule where
     compare = Function.on compare (\r -> (lhs r, rhs r))
 
+getSymbols :: (Symbol -> Bool) -> Set.Set GrammarRule -> Set.Set Symbol
+getSymbols p = List.foldr (flip (List.foldr (\x -> if p x then Set.insert x else id )) . (\r -> lhs r : rhs r)) Set.empty
+
+getNTerms :: Set.Set GrammarRule -> Set.Set Symbol
+getNTerms = getSymbols isNTerm
+
+getTerms :: Set.Set GrammarRule -> Set.Set Symbol
+getTerms = getSymbols isTerm
+
 parseGrammarRules = parse parseRules "(unknown)"
 
 parseRules :: GenParser Char st [(String, [String])]

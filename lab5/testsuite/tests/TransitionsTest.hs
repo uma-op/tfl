@@ -24,7 +24,7 @@ test_first filename expected = predicate @? ""
                 (Right parsed) <- parseFromFile filename
                 let shaped = shapeGrammarRules parsed 
                 let cleaned = cleanGrammarRules (head shaped) (tail shaped)
-                let firsted = first cleaned
+                let firsted = first $ Set.fromList cleaned
                 if firsted == expected then do
                     return True
                 else do
@@ -40,7 +40,7 @@ test_follow filename expected = predicate @? ""
                 (Right parsed) <- parseFromFile filename
                 let shaped = shapeGrammarRules parsed 
                 let cleaned = cleanGrammarRules (head shaped) (tail shaped)
-                let followed = follow cleaned
+                let followed = follow $ Set.fromList cleaned
                 if followed == expected then do
                     return True
                 else do
