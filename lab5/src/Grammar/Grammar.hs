@@ -4,6 +4,7 @@ import qualified Data.Function as Function
 import qualified Data.Set as Set
 import qualified Data.List as List
 import qualified Data.Bifunctor as Bifunctor
+import qualified Data.Maybe as Maybe
 
 import Text.Parsec.Char
 import Text.ParserCombinators.Parsec
@@ -57,20 +58,23 @@ parseSymbol :: GenParser Char st String
 parseSymbol = many (noneOf " \n->")
 
 
-shapeGrammarRules rawRules = List.reverse $ List.foldl (shapeGrammarRules' (Set.fromList $ List.map fst rawRules)) [] rawRules
+shapeGrammarRules :: [([Char], [[Char]])] -> (GrammarRule, Set.Set GrammarRule)
+shapeGrammarRules rawRules = (shapeGrammarRule' startRule, List.foldr (Set.insert . shapeGrammarRule') Set.empty otherRules)
     where
+        (startRule, otherRules) = Maybe.fromJust $ List.uncons rawRules
+        nterms = Set.fromList $ List.map fst rawRules
         startNTerm = fst $ head rawRules
-        shapeGrammarRules' nterms rules raw =
+        shapeGrammarRule' raw =
             GrammarRule
                 { lhs = newLhs
-                , rhs = if fst raw == startNTerm then newRhs ++ [End] else newRhs } : rules
+                , rhs = if fst raw == startNTerm then newRhs ++ [End] else newRhs }
             where
                 toSymbol s = if s `Set.member` nterms then NTerm s else Term s
                 newLhs = toSymbol $ fst raw
                 newRhs = List.map toSymbol $ snd raw
 
 
-cleanGrammarRules startRule otherRules = Set.toList $ cleanUnreachable $ cleanNonGenerative $ Set.fromList (startRule : otherRules)
+cleanGrammarRules startRule otherRules = cleanUnreachable $ cleanNonGenerative $ Set.insert startRule otherRules
     where
         cleanNonGenerative rules = rules Set.\\ nonGenerative terms rules
             where

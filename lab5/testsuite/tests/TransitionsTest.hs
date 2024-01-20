@@ -7,61 +7,22 @@ import Test.Framework.Providers.HUnit (testCase)
 
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import qualified Data.Maybe as Maybe
+import qualified Data.Either as Either
+import qualified Data.List as List
+
+import TestingUtils
 
 import Transitions
 import Grammar
 
-parseFromFile filename =
-    do
-        filepath <- getDataFileName filename
-        input <- readFile filepath
-        return $ parseGrammarRules input
+initGrammar = uncurry cleanGrammarRules . shapeGrammarRules . Either.fromRight undefined
 
-test_first filename expected = predicate @? ""
-    where
-        predicate = assertionPredicate $
-            do
-                (Right parsed) <- parseFromFile filename
-                let shaped = shapeGrammarRules parsed 
-                let cleaned = cleanGrammarRules (head shaped) (tail shaped)
-                let firsted = first $ Set.fromList cleaned
-                if firsted == expected then do
-                    return True
-                else do
-                    putStrLn "First failed"
-                    print firsted
-                    return False
+test_first = grammarTestFactory (first . initGrammar)
 
+test_follow = grammarTestFactory (follow . initGrammar)
 
-test_follow filename expected = predicate @? ""
-    where
-        predicate = assertionPredicate $
-            do
-                (Right parsed) <- parseFromFile filename
-                let shaped = shapeGrammarRules parsed 
-                let cleaned = cleanGrammarRules (head shaped) (tail shaped)
-                let followed = follow $ Set.fromList cleaned
-                if followed == expected then do
-                    return True
-                else do
-                    putStrLn "Follow failed"
-                    print followed
-                    return False
-
-test_goto filename expected ss ts = predicate @? ""
-    where
-        predicate = assertionPredicate $
-            do
-                (Right parsed) <- parseFromFile filename
-                let shaped = shapeGrammarRules parsed 
-                let cleaned = cleanGrammarRules (head shaped) (tail shaped)
-                let gotoed = goto ss ts (Set.fromList cleaned)
-                if gotoed == expected then do
-                    return True
-                else do
-                    putStrLn "Goto failed"
-                    print gotoed
-                    return False
+test_goto ss ts = grammarTestFactory (goto ss ts . initGrammar)
 
 tests = 
     [ testGroup "First test"
@@ -114,16 +75,7 @@ tests =
                     , ( End, Set.empty ) ] ]
     , testGroup "Goto test"
         [ testCase "goto clear" $
-            test_goto "testsuite/data/clear-grammar.txt"
-                (Set.fromList
-                    [ Situation
-                        { symbol = NTerm "B"
-                        , beforeDot = []
-                        , afterDot = [Term "b"] }
-                    , Situation
-                        { symbol = NTerm "S"
-                        , beforeDot = [NTerm "A"]
-                        , afterDot = [NTerm "B", End] } ])
+            test_goto
                 (Set.fromList
                     [ Situation
                         { symbol = NTerm "S"
@@ -133,6 +85,16 @@ tests =
                         { symbol = NTerm "S"
                         , beforeDot = []
                         , afterDot = [NTerm "A", NTerm "B", End] }])
-                (NTerm "A") ] ]
+                (NTerm "A")
+                "testsuite/data/clear-grammar.txt"
+                (Set.fromList
+                    [ Situation
+                        { symbol = NTerm "B"
+                        , beforeDot = []
+                        , afterDot = [Term "b"] }
+                    , Situation
+                        { symbol = NTerm "S"
+                        , beforeDot = [NTerm "A"]
+                        , afterDot = [NTerm "B", End] } ]) ] ]
 
 main = defaultMain tests

@@ -7,6 +7,20 @@ maintainer:         uma7op@gmail.com
 
 extra-source-files: CHANGELOG.md
 
+library uma-testing-utils
+  exposed-modules: TestingUtils
+  other-modules: Paths_lab5
+  autogen-modules: Paths_lab5
+  build-depends:
+      base
+    , filepath
+    , test-framework
+    , test-framework-hunit
+    , HUnit
+    , uma-grammar
+  hs-source-dirs: src/TestingUtils
+  default-language: Haskell2010
+
 library uma-grammar
   exposed-modules: Grammar
   build-depends:
@@ -26,10 +40,12 @@ Test-Suite grammar-test
     , testsuite/data/dirty-grammar.txt
   build-depends: 
       base 
+    , containers
     , filepath
     , test-framework
     , test-framework-hunit
     , HUnit
+    , uma-testing-utils
     , uma-grammar
   hs-source-dirs: testsuite
   default-language: Haskell2010
@@ -71,6 +87,7 @@ Test-Suite transitions-test
     , HUnit 
     , uma-grammar
     , uma-transitions
+    , uma-testing-utils
   default-language: Haskell2010
 
 library uma-slr-analyzer
