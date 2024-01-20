@@ -18,11 +18,10 @@ import Grammar
 
 initGrammar = uncurry cleanGrammarRules . shapeGrammarRules . Either.fromRight undefined
 
-test_first = grammarTestFactory (first . initGrammar)
-
-test_follow = grammarTestFactory (follow . initGrammar)
-
-test_goto ss ts = grammarTestFactory (goto ss ts . initGrammar)
+test_first = grammarTestFactory (first . snd . initGrammar)
+test_follow = grammarTestFactory (follow . snd . initGrammar)
+test_goto ss ts = grammarTestFactory (goto ss ts . snd . initGrammar)
+test_build = grammarTestFactory initGrammar
 
 tests = 
     [ testGroup "First test"
@@ -95,6 +94,7 @@ tests =
                     , Situation
                         { symbol = NTerm "S"
                         , beforeDot = [NTerm "A"]
-                        , afterDot = [NTerm "B", End] } ]) ] ]
+                        , afterDot = [NTerm "B", End] } ]) ]
+        ]
 
 main = defaultMain tests

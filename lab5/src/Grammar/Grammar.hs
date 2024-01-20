@@ -58,10 +58,9 @@ parseSymbol :: GenParser Char st String
 parseSymbol = many (noneOf " \n->")
 
 
-shapeGrammarRules :: [([Char], [[Char]])] -> (GrammarRule, Set.Set GrammarRule)
-shapeGrammarRules rawRules = (shapeGrammarRule' startRule, List.foldr (Set.insert . shapeGrammarRule') Set.empty otherRules)
+shapeGrammarRules :: [([Char], [[Char]])] -> (Symbol, Set.Set GrammarRule)
+shapeGrammarRules rawRules = (NTerm $ fst $ head rawRules, List.foldr (Set.insert . shapeGrammarRule') Set.empty rawRules)
     where
-        (startRule, otherRules) = Maybe.fromJust $ List.uncons rawRules
         nterms = Set.fromList $ List.map fst rawRules
         startNTerm = fst $ head rawRules
         shapeGrammarRule' raw =
@@ -74,7 +73,7 @@ shapeGrammarRules rawRules = (shapeGrammarRule' startRule, List.foldr (Set.inser
                 newRhs = List.map toSymbol $ snd raw
 
 
-cleanGrammarRules startRule otherRules = cleanUnreachable $ cleanNonGenerative $ Set.insert startRule otherRules
+cleanGrammarRules startNTerm rules = (startNTerm, cleanUnreachable $ cleanNonGenerative rules)
     where
         cleanNonGenerative rules = rules Set.\\ nonGenerative terms rules
             where
@@ -91,7 +90,7 @@ cleanGrammarRules startRule otherRules = cleanUnreachable $ cleanNonGenerative $
                                 (Set.map lhs)
                                 (Set.partition isGenerative unprocessed)
 
-        cleanUnreachable rules = rules Set.\\ unreachable (Set.singleton $ lhs startRule) rules
+        cleanUnreachable rules = rules Set.\\ unreachable (Set.singleton startNTerm) rules
             where
                 unreachable :: Set.Set Symbol -> Set.Set GrammarRule -> Set.Set GrammarRule
                 unreachable reachable unprocessed
