@@ -14,7 +14,7 @@ data Symbol = NTerm { value :: String } | Term { value :: String } | End derivin
 instance Show Symbol where
     show (NTerm v) = " _" ++ v
     show (Term v) = ' ' : v
-    show End = ""
+    show End = " $"
 
 isTerm (NTerm t) = False
 isTerm (Term t) = True

@@ -51,16 +51,6 @@ push newNode symbol topNode gs =
             where
                 updatedDegrees = Map.update (Just . (+ 1)) topNode $ degrees gs
 
--- addTop ::
---     Node ->        -- node that will be new top
---     GraphStack ->  -- input stack
---     GraphStack     -- output stack
--- addTop topNode gs =
---     GraphStack
---         { tops = Set.insert topNode $ tops gs
---         , nodes = nodes gs
---         , degrees = degrees gs }
-
 deleteTop ::
     Node ->        -- top node of stack to be deleted
     GraphStack ->  -- input stack
@@ -87,34 +77,3 @@ deleteTop t gs =
                         { tops = tops gs
                         , nodes = newNodes
                         , degrees = newDegrees }
-
--- pop ::
---     Node ->        -- top node
---     Maybe Node ->  -- previous node, needed if top is common for several stacks, else ignored
---     GraphStack ->  -- input stack
---     GraphStack     -- output stack
--- pop topNode prevNode gs
---     | degrees gs Map.! topNode /= 0 = error "GraphStack.pop: can't pop from stack whose top lies under another elements"
---     | otherwise =
---         GraphStack
---             { tops = newTops
---             , nodes = newNodes
---             , degrees = newDegrees }
---     where
---         prevNodes = List.map fst $ nodes gs Map.! topNode
---         (newTops, newNodes, newDegrees) =
---             case prevNodes of
---                 [] -> (Set.empty, Map.empty, Map.empty)  -- bottom of stack reached
---                 [p] ->
---                     ( Set.insert p $ Set.delete topNode $ tops gs
---                     , Map.delete topNode $ nodes gs
---                     , Map.update (Just . flip (-) 1) p $ Map.delete topNode $ degrees gs )
---                 _ ->
---                     let unpackedPrevNode =
---                             case prevNode of
---                                 Just n -> if n `List.elem` prevNodes then n else error "GraphStack.pop: no such previous node"
---                                 Nothing -> error "GraphStack.pop: ambiguous pop must be determined with previous vertex"
---                     in
---                         ( Set.insert unpackedPrevNode $ tops gs
---                         , Map.update (Just . List.deleteBy (Function.on (==) fst) (unpackedPrevNode, "")) topNode $ nodes gs
---                         , Map.update (Just . flip (-) 1) unpackedPrevNode $ degrees gs )

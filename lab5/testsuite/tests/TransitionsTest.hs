@@ -104,65 +104,105 @@ tests =
     , testGroup "Build test"
         [ testCase "build clear" $
             test_build "testsuite/data/clear-grammar.txt" $
-            Transitions
-                { table =
-                    Map.fromList
-                        [ (0, ( Map.fromList
-                                    [ (NTerm "A", Just 1)
-                                    , (NTerm "B", Nothing)
-                                    , (NTerm "S", Just 2) ]
-                              , Map.fromList
-                                    [ (End, [])
-                                    , (Term "a", [Shift 3])
-                                    , (Term "b", []) ]) )
-                        , (1, ( Map.fromList
-                                    [ (NTerm "A", Nothing)
-                                    , (NTerm "B", Just 4)
-                                    , (NTerm "S", Nothing) ]
-                              , Map.fromList
-                                    [ (End, [])
-                                    , (Term "a", [])
-                                    , (Term "b", [Shift 5]) ]))
-                        , (2, ( Map.fromList
-                                    [ (NTerm "A", Nothing)
-                                    , (NTerm "B", Nothing)
-                                    , (NTerm "S", Nothing) ]
-                              , Map.fromList
-                                    [ (End, [Reduce $ GrammarRule { lhs = NTerm "", rhs = [NTerm "S", End] }])
-                                    , (Term "a", [])
-                                    , (Term "b", []) ] ))
-                        
-                        , (3, ( Map.fromList
-                                    [ (NTerm "S", Nothing)
-                                    , (NTerm "A", Nothing)
-                                    , (NTerm "B", Nothing) ]
-                              , Map.fromList
-                                    [ (Term "a", [])
-                                    , (Term "b", [Reduce $ GrammarRule { lhs = NTerm "A", rhs = [Term "a"] }, Shift 6])
-                                    , (End, []) ]) )
-                        , (4, ( Map.fromList
-                                    [ (NTerm "S", Nothing)
-                                    , (NTerm "A", Nothing)
-                                    , (NTerm "B", Nothing) ]
-                              , Map.fromList
-                                    [ (Term "a", [])
-                                    , (Term "b", [])
-                                    , (End, [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [NTerm "A", NTerm "B"] }]) ] ))
-                        , (5, ( Map.fromList
-                                    [ (NTerm "S", Nothing)
-                                    , (NTerm "A", Nothing)
-                                    , (NTerm "B", Nothing) ]
-                              , Map.fromList
-                                    [ (Term "a", [])
-                                    , (Term "b", [])
-                                    , (End, [Reduce $ GrammarRule { lhs = NTerm "B", rhs = [Term "b"] }]) ] ))
-                        , (6, ( Map.fromList
-                                    [ (NTerm "S", Nothing)
-                                    , (NTerm "A", Nothing)
-                                    , (NTerm "B", Nothing) ]
-                              , Map.fromList
-                                    [ (Term "a", [])
-                                    , (Term "b", [])
-                                    , (End, [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [Term "a", Term "b"] }]) ] )) ] } ] ]
+                Transitions
+                    { table =
+                        Map.fromList
+                            [ (0, ( Map.fromList
+                                        [ (NTerm "A", Just 1)
+                                        , (NTerm "B", Nothing)
+                                        , (NTerm "S", Just 2) ]
+                                  , Map.fromList
+                                        [ (End, [])
+                                        , (Term "a", [Shift 3])
+                                        , (Term "b", []) ]) )
+                            , (1, ( Map.fromList
+                                        [ (NTerm "A", Nothing)
+                                        , (NTerm "B", Just 4)
+                                        , (NTerm "S", Nothing) ]
+                                  , Map.fromList
+                                        [ (End, [])
+                                        , (Term "a", [])
+                                        , (Term "b", [Shift 5]) ]))
+                            , (2, ( Map.fromList
+                                        [ (NTerm "A", Nothing)
+                                        , (NTerm "B", Nothing)
+                                        , (NTerm "S", Nothing) ]
+                                  , Map.fromList
+                                        [ (End, [Reduce $ GrammarRule { lhs = NTerm "", rhs = [NTerm "S", End] }])
+                                        , (Term "a", [])
+                                        , (Term "b", []) ] ))
+
+                            , (3, ( Map.fromList
+                                        [ (NTerm "S", Nothing)
+                                        , (NTerm "A", Nothing)
+                                        , (NTerm "B", Nothing) ]
+                                  , Map.fromList
+                                        [ (Term "a", [])
+                                        , (Term "b", [Reduce $ GrammarRule { lhs = NTerm "A", rhs = [Term "a"] }, Shift 6])
+                                        , (End, []) ]) )
+                            , (4, ( Map.fromList
+                                        [ (NTerm "S", Nothing)
+                                        , (NTerm "A", Nothing)
+                                        , (NTerm "B", Nothing) ]
+                                  , Map.fromList
+                                        [ (Term "a", [])
+                                        , (Term "b", [])
+                                        , (End, [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [NTerm "A", NTerm "B"] }]) ] ))
+                            , (5, ( Map.fromList
+                                        [ (NTerm "S", Nothing)
+                                        , (NTerm "A", Nothing)
+                                        , (NTerm "B", Nothing) ]
+                                  , Map.fromList
+                                        [ (Term "a", [])
+                                        , (Term "b", [])
+                                        , (End, [Reduce $ GrammarRule { lhs = NTerm "B", rhs = [Term "b"] }]) ] ))
+                            , (6, ( Map.fromList
+                                        [ (NTerm "S", Nothing)
+                                        , (NTerm "A", Nothing)
+                                        , (NTerm "B", Nothing) ]
+                                  , Map.fromList
+                                        [ (Term "a", [])
+                                        , (Term "b", [])
+                                        , (End, [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [Term "a", Term "b"] }]) ] )) ] }
+        , testCase "build dirty" $
+            test_build "testsuite/data/dirty-grammar.txt" $
+                Transitions
+                    { table =
+                        Map.fromList
+                            [ (0, ( Map.fromList
+                                        [ (NTerm "A", Nothing)
+                                        , (NTerm "S", Just 1) ]
+                                  , Map.fromList
+                                        [ (End, [])
+                                        , (Term "a", [Shift 2])
+                                        , (Term "d", []) ] ))
+                            , (1, ( Map.fromList
+                                        [ (NTerm "A", Nothing)
+                                        , (NTerm "S", Nothing) ]
+                                  , Map.fromList
+                                        [ (End, [Reduce $ GrammarRule { lhs = NTerm "", rhs = [NTerm "S", End] }])
+                                        , (Term "a", [])
+                                        , (Term "d", []) ] ))
+                            , (2, ( Map.fromList
+                                        [ (NTerm "A", Just 3)
+                                        , (NTerm "S", Nothing) ]
+                                  , Map.fromList
+                                        [ (End, [])
+                                        , (Term "a", [])
+                                        , (Term "d", [Shift 4]) ] ))
+                            , (3, ( Map.fromList
+                                        [ (NTerm "A", Nothing)
+                                        , (NTerm "S", Nothing) ]
+                                  , Map.fromList
+                                        [ (End, [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [Term "a", NTerm "A"] }])
+                                        , (Term "a", [])
+                                        , (Term "d", []) ] ))
+                            , (4, ( Map.fromList
+                                        [ (NTerm "A", Nothing)
+                                        , (NTerm "S", Nothing) ]
+                                  , Map.fromList
+                                        [ (End, [Reduce $ GrammarRule { lhs = NTerm "A", rhs = [Term "d"] }])
+                                        , (Term "a", [])
+                                        , (Term "d", []) ] )) ] }] ]
 
 main = defaultMain tests
