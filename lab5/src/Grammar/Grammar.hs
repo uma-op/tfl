@@ -9,7 +9,12 @@ import qualified Data.Maybe as Maybe
 import Text.Parsec.Char
 import Text.ParserCombinators.Parsec
 
-data Symbol = NTerm { value :: String } | Term { value :: String } | End deriving (Eq, Show)
+data Symbol = NTerm { value :: String } | Term { value :: String } | End deriving Eq
+
+instance Show Symbol where
+    show (NTerm v) = " _" ++ v
+    show (Term v) = ' ' : v
+    show End = ""
 
 isTerm (NTerm t) = False
 isTerm (Term t) = True
@@ -27,7 +32,10 @@ data GrammarRule =
     GrammarRule
         { lhs :: Symbol
         , rhs :: [Symbol] }
-    deriving (Eq, Show)
+    deriving Eq
+
+instance Show GrammarRule where
+    show gr = show (lhs gr) ++ " ->" ++ (rhs gr >>= show)
 
 instance Ord GrammarRule where
     compare = Function.on compare (\r -> (lhs r, rhs r))
@@ -58,22 +66,24 @@ parseSymbol :: GenParser Char st String
 parseSymbol = many (noneOf " \n->")
 
 
-shapeGrammarRules :: [([Char], [[Char]])] -> (Symbol, Set.Set GrammarRule)
-shapeGrammarRules rawRules = (NTerm $ fst $ head rawRules, List.foldr (Set.insert . shapeGrammarRule') Set.empty rawRules)
+shapeGrammarRules :: [([Char], [[Char]])] -> Set.Set GrammarRule
+shapeGrammarRules rawRules =
+    Set.insert
+        (GrammarRule { lhs = NTerm "" , rhs = [NTerm $ fst $ head rawRules, End] })
+        (List.foldr (Set.insert . shapeGrammarRule') Set.empty rawRules)
     where
         nterms = Set.fromList $ List.map fst rawRules
-        startNTerm = fst $ head rawRules
         shapeGrammarRule' raw =
             GrammarRule
                 { lhs = newLhs
-                , rhs = if fst raw == startNTerm then newRhs ++ [End] else newRhs }
+                , rhs = newRhs }
             where
                 toSymbol s = if s `Set.member` nterms then NTerm s else Term s
                 newLhs = toSymbol $ fst raw
                 newRhs = List.map toSymbol $ snd raw
 
 
-cleanGrammarRules startNTerm rules = (startNTerm, cleanUnreachable $ cleanNonGenerative rules)
+cleanGrammarRules rules = cleanUnreachable $ cleanNonGenerative rules
     where
         cleanNonGenerative rules = rules Set.\\ nonGenerative terms rules
             where
@@ -90,7 +100,7 @@ cleanGrammarRules startNTerm rules = (startNTerm, cleanUnreachable $ cleanNonGen
                                 (Set.map lhs)
                                 (Set.partition isGenerative unprocessed)
 
-        cleanUnreachable rules = rules Set.\\ unreachable (Set.singleton startNTerm) rules
+        cleanUnreachable rules = rules Set.\\ unreachable (Set.singleton $ NTerm "") rules
             where
                 unreachable :: Set.Set Symbol -> Set.Set GrammarRule -> Set.Set GrammarRule
                 unreachable reachable unprocessed

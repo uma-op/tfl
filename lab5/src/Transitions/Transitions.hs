@@ -11,14 +11,20 @@ import qualified Data.Maybe as Maybe
 
 import qualified Grammar
 
-data Action = Reduce Int | Shift Int
+data Action = Reduce Grammar.GrammarRule | Shift Int deriving (Eq, Show)
 
 data Situation =
     Situation
         { symbol :: Grammar.Symbol
         , beforeDot :: [Grammar.Symbol]
         , afterDot :: [Grammar.Symbol] }
-    deriving (Eq, Show)
+    deriving Eq
+
+instance Show Situation where
+    show s =
+        show (symbol s)
+        ++ " ->" ++ (List.reverse (beforeDot s) >>= show)
+        ++ " ." ++ (afterDot s >>= show)
 
 instance Ord Situation where
     compare x y =
@@ -54,6 +60,7 @@ startSituationFromGrammarRule rule =
         , afterDot = Grammar.rhs rule }
 
 isFinalSituation (Situation { afterDot = []}) = True
+isFinalSituation (Situation { afterDot = [Grammar.End]}) = True
 isFinalSituation _ = False
 
 finalSituationFromGrammarRule :: Grammar.GrammarRule -> Situation
@@ -63,7 +70,10 @@ finalSituationFromGrammarRule rule =
         , beforeDot = List.reverse $ Grammar.rhs rule
         , afterDot = [] }
 
-newtype Transitions = Transitions { table :: Map.Map Int (Map.Map Grammar.Symbol Int, Map.Map Grammar.Symbol [Action]) }
+newtype Transitions =
+    Transitions
+        { table :: Map.Map Int ( Map.Map Grammar.Symbol (Maybe.Maybe Int)
+                               , Map.Map Grammar.Symbol [Action] ) } deriving (Eq, Show)
 
 closure :: Set.Set Situation -> Set.Set Grammar.GrammarRule -> Set.Set Situation
 closure ss rs = closure' ss (Set.map startSituationFromGrammarRule rs) Set.empty
@@ -121,11 +131,14 @@ first rules =
 
 follow :: Set.Set Grammar.GrammarRule -> Map.Map Grammar.Symbol (Set.Set Grammar.Symbol)
 follow rules =
-    follow' $
-    Map.fromList $
-    Set.fold
-        ((++) . (\r -> (Grammar.lhs r, Set.empty) : List.map (, Set.empty) (Grammar.rhs r)))
-        [] rules
+    Map.insert
+        (Grammar.NTerm "")
+        (Set.singleton Grammar.End) $
+            follow' $
+                Map.fromList $
+                    Set.fold
+                        ((++) . (\r -> (Grammar.lhs r, Set.empty) : List.map (, Set.empty) (Grammar.rhs r)))
+                        [] rules
     where
         first' = first rules
 
@@ -137,7 +150,7 @@ follow rules =
                 followOne (Grammar.GrammarRule { Grammar.rhs = [] }) result = result
                 followOne rule result =
                     if List.null newTerms then
-                        result
+                        followOne (rule { Grammar.rhs = tail $ Grammar.rhs rule }) result
                     else
                         followOne
                             (rule { Grammar.rhs = tail $ Grammar.rhs rule })
@@ -157,7 +170,7 @@ goByNTerm ::
     Grammar.Symbol ->  -- nterm that we are following
     Int ->             -- current state
     Transitions ->     -- transitions table
-    Int                -- go to action
+    Maybe.Maybe Int                -- go to action
 goByNTerm symbol state (Transitions table) = fst (table Map.! state) Map.! symbol
 
 goByTerm ::
@@ -167,19 +180,20 @@ goByTerm ::
     [Action]           -- go to actions
 goByTerm symbol state (Transitions table) = snd (table Map.! state) Map.! symbol
 
-buildTransitions :: Grammar.GrammarRule -> Set.Set Grammar.GrammarRule -> Transitions
-buildTransitions startRule otherRules = buildTransitions' (Set.singleton 0) states (Transitions { table = Map.empty })
+buildTransitions :: Set.Set Grammar.GrammarRule -> Transitions
+buildTransitions rules =
+    buildTransitions'
+        (Set.singleton 0)
+        states
+        (Transitions { table = Map.empty })
     where
-        allRules = Set.insert startRule otherRules
-        enumeratedRules = Map.fromList $ List.foldl (\r x -> (x, (snd . head) r + 1) : r) [(startRule, 0)] otherRules
-
-        terms = Grammar.getTerms allRules
-        nterms = Grammar.getNTerms allRules
+        terms = Grammar.getTerms rules
+        nterms = Set.delete (Grammar.NTerm "") $ Grammar.getNTerms rules
         allSymbols = Set.union terms nterms
 
-        states = Set.singleton (0, closure (Set.singleton $ startSituationFromGrammarRule startRule) allRules)
+        states = Set.singleton (0, closure (Set.map startSituationFromGrammarRule $ Set.filter ((== Grammar.NTerm "") . Grammar.lhs) rules) rules)
 
-        follow' = follow allRules
+        follow' = follow rules
 
         buildTransitions' statesToBuild states buildedTransitions =
             if Set.null statesToBuild then
@@ -198,7 +212,7 @@ buildTransitions startRule otherRules = buildTransitions' (Set.singleton 0) stat
 
                     where
                         stateSituations = snd $ Maybe.fromJust $ List.find ((== stateToBuild) . fst) states
-                        gotoTransitions = Map.fromList $ List.foldl (\res nterm -> (nterm, goto stateSituations nterm allRules) : res) [] nterms
+                        gotoTransitions = Map.fromList $ List.foldr ((:) . (\nterm -> (nterm, goto stateSituations nterm rules))) [] nterms
 
                         (finalSituations, intermediateSituation) = Set.partition isFinalSituation stateSituations
 
@@ -213,7 +227,11 @@ buildTransitions startRule otherRules = buildTransitions' (Set.singleton 0) stat
                                         result
 
                         shiftTransitions :: Map.Map Grammar.Symbol [Either Situation (Set.Set Situation)]
-                        shiftTransitions = Map.fromList $ Set.fold (\t r -> (t, [Right $ goto intermediateSituation t allRules]) : r) [] terms
+                        shiftTransitions = Map.fromList $ Set.foldr ((:) . shiftTransition) [] terms
+                            where
+                                shiftTransition t = (t, [Right goto' | not (Set.null goto')])
+                                    where
+                                        goto' = goto intermediateSituation t rules
 
                         actionTransitions = Map.unionWith (++) shiftTransitions reduceTransitions
 
@@ -222,7 +240,7 @@ buildTransitions startRule otherRules = buildTransitions' (Set.singleton 0) stat
                             case List.find ((== s) . snd) ss of
                                 Just (x, _) -> (x, ss)
                                 Nothing ->
-                                    let newState = fst $ Set.findMax ss
+                                    let newState = fst (Set.findMax ss) + 1
                                     in (newState, Set.insert (newState, s) ss)
 
                         getActions ::
@@ -236,35 +254,41 @@ buildTransitions startRule otherRules = buildTransitions' (Set.singleton 0) stat
                             else
                                 let
                                     ((transitionSymbol, rawActions), ts) = Map.deleteFindMin actionTransitions
-
                                     (convertedActions, newStates) = List.foldl folding ([], states) rawActions
                                         where
                                             folding result (Left r) =
                                                 Bifunctor.first
                                                     (Reduce
-                                                        ( enumeratedRules Map.!
                                                             Grammar.GrammarRule
                                                                 { Grammar.lhs = symbol r
-                                                                , Grammar.rhs = List.reverse $ beforeDot r } ) :)
+                                                                , Grammar.rhs = List.reverse (beforeDot r) ++ afterDot r } :)
                                                     result
                                             folding result (Right s) = Bifunctor.first ((: fst result) . Shift) $ getState s (snd result)
 
-                                in getActions ts (Map.insert transitionSymbol convertedActions actions) newStates
+                                in
+                                    if List.null rawActions then
+                                        getActions ts (Map.insert transitionSymbol [] actions) states
+                                    else
+                                        getActions ts (Map.insert transitionSymbol convertedActions actions) newStates
 
                         getGotos ::
                             Map.Map Grammar.Symbol (Set.Set Situation) ->
-                            Map.Map Grammar.Symbol Int ->
+                            Map.Map Grammar.Symbol (Maybe.Maybe Int) ->
                             Set.Set (Int, Set.Set Situation) ->
-                            (Map.Map Grammar.Symbol Int, Set.Set (Int, Set.Set Situation))
+                            (Map.Map Grammar.Symbol (Maybe.Maybe Int), Set.Set (Int, Set.Set Situation))
                         getGotos gotoTransitions gotos states =
                             if Map.null gotoTransitions then
                                 (gotos, states)
                             else
                                 let
-                                    ((transitionSymbol, rawGoto), ts) = Map.deleteFindMax gotoTransitions
+                                    ((transitionSymbol, rawGoto), ts) = Map.deleteFindMin gotoTransitions
                                     (convertedGoto, newStates) = getState rawGoto states
-                                in getGotos ts (Map.insert transitionSymbol convertedGoto gotos) newStates
-                        
+                                in
+                                    if Set.null rawGoto then
+                                        getGotos ts (Map.insert transitionSymbol Nothing gotos) states
+                                    else
+                                        getGotos ts (Map.insert transitionSymbol (Maybe.Just convertedGoto) gotos) newStates
 
-                        (actions, (gotos, newStates)) = Bifunctor.second (getGotos gotoTransitions Map.empty) (getActions actionTransitions Map.empty states)
+
+                        (gotos, (actions, newStates)) = Bifunctor.second (getActions actionTransitions Map.empty) (getGotos gotoTransitions Map.empty states)
                         onlyNewStates = newStates Set.\\ states
