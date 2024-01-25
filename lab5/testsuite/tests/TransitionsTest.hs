@@ -18,13 +18,40 @@ import Grammar
 
 initGrammar = cleanGrammarRules . shapeGrammarRules . Either.fromRight undefined
 
+test_closure ss = grammarTestFactory (closure ss . initGrammar)
 test_first = grammarTestFactory (first . initGrammar)
 test_follow = grammarTestFactory (follow . initGrammar)
 test_goto ss ts = grammarTestFactory (goto ss ts . initGrammar)
 test_build = grammarTestFactory (buildTransitions . initGrammar)
 
 tests = 
-    [ testGroup "First test"
+    [ testGroup "Closure test" 
+        [ testCase "closure Tanya" $
+            test_closure
+                (Set.fromList
+                    [Situation
+                        { symbol = NTerm ""
+                        , beforeDot = []
+                        , afterDot = [NTerm "S", End] }])
+                "testsuite/data/tanya-grammar.txt"
+                (Set.fromList
+                    [Situation
+                        { symbol = NTerm ""
+                        , beforeDot = []
+                        , afterDot = [NTerm "S", End]}
+                    , Situation
+                        { symbol = NTerm "S"
+                        , beforeDot = []
+                        , afterDot = [NTerm "S", NTerm "S"]}
+                    , Situation
+                        { symbol = NTerm "S"
+                        , beforeDot = []
+                        , afterDot = [Term "c", NTerm "S"]}
+                    , Situation
+                        { symbol = NTerm "S"
+                        , beforeDot = []
+                        , afterDot = [Term "c"]}])]
+    , testGroup "First test"
         [ testCase "first clear" $
             test_first "testsuite/data/clear-grammar.txt" $
                 Map.fromList
@@ -44,7 +71,7 @@ tests =
                     , ( Term "a", Set.singleton (Term "a") )
                     , ( Term "d", Set.singleton (Term "d") )
                     , ( End, Set.singleton End ) ] ]
-        , testCase "first tanya" $
+        , testCase "first Tanya" $
             test_first "testsuite/data/tanya-grammar.txt" $
                 Map.fromList
                     [ ( NTerm "", Set.singleton (Term "c") )
@@ -71,7 +98,7 @@ tests =
                     , ( Term "a", Set.singleton (Term "d") )
                     , ( Term "d", Set.singleton End )
                     , ( End, Set.empty ) ] 
-        , testCase "follow tanya" $
+        , testCase "follow Tanya" $
             test_follow "testsuite/data/tanya-grammar.txt" $
                 Map.fromList
                     [ ( NTerm "", Set.singleton End )
@@ -203,6 +230,39 @@ tests =
                                   , Map.fromList
                                         [ (End, [Reduce $ GrammarRule { lhs = NTerm "A", rhs = [Term "d"] }])
                                         , (Term "a", [])
-                                        , (Term "d", []) ] )) ] }] ]
+                                        , (Term "d", []) ] )) ] }
+        , testCase "build Tanya" $
+            test_build "testsuite/data/tanya-grammar.txt" $
+                Transitions
+                    { table =
+                        Map.fromList
+                            [ (0, ( Map.fromList [ (NTerm "S", Just 1) ]
+                                  , Map.fromList [ (End, []), (Term "c", [Shift 2]) ] ))
+                            , (1, ( Map.fromList [ (NTerm "S", Just 3) ]
+                                  , Map.fromList [ (End, [Reduce $ GrammarRule { lhs = NTerm "", rhs = [NTerm "S", End]}]), (Term "c", [Shift 2]) ] ))
+                            , (2, ( Map.fromList [ (NTerm "S", Just 4) ]
+                                  , Map.fromList
+                                        [ (End, [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [Term "c"]}])
+                                        , (Term "c", [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [Term "c"]}, Shift 2]) ] ))
+                            , (3, ( Map.fromList [ (NTerm "S", Just 3) ]
+                                  , Map.fromList
+                                        [ (End, [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [NTerm "S", NTerm "S"]}])
+                                        , (Term "c", [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [NTerm "S", NTerm "S"]}, Shift 2]) ] ))
+                            , (4, ( Map.fromList [ (NTerm "S", Just 3) ]
+                                  , Map.fromList
+                                        [ (End, [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [Term "c", NTerm "S"]}])
+                                        , (Term "c", [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [Term "c", NTerm "S"]}, Shift 2]) ] )) ] }
+        , testCase "build another Tanya" $
+            test_build "testsuite/data/another-tanya-grammar.txt" $
+                Transitions
+                    { table =
+                        Map.fromList
+                            [ (0, ( Map.fromList [ (NTerm "S", Just 1) ], Map.fromList [(End, []), (Term "c", [Shift 2])] ))
+                            , (1, ( Map.fromList [ (NTerm "S", Nothing) ]
+                                  , Map.fromList [(End, [Reduce $ GrammarRule { lhs = NTerm "", rhs = [NTerm "S", End] }]), (Term "c", [])] ))
+                            , (2, ( Map.fromList [ (NTerm "S", Just 3) ]
+                                  , Map.fromList [(End, [Reduce $ GrammarRule { lhs = NTerm "S", rhs =  [Term "c"] }]), (Term "c", [Shift 2])] ))
+                            , (3, ( Map.fromList [ (NTerm "S", Nothing) ]
+                                  , Map.fromList [(End, [Reduce $ GrammarRule { lhs = NTerm "S", rhs = [Term "c", NTerm "S"] }]), (Term "c", [])] )) ] } ] ]
 
 main = defaultMain tests

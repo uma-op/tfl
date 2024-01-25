@@ -78,6 +78,7 @@ newtype Transitions =
 closure :: Set.Set Situation -> Set.Set Grammar.GrammarRule -> Set.Set Situation
 closure ss rs = closure' ss (Set.map startSituationFromGrammarRule rs) Set.empty
     where
+        startSituations = Set.map startSituationFromGrammarRule rs
         closure' situations rules result =
             if Set.null situations then
                 result
@@ -87,9 +88,10 @@ closure ss rs = closure' ss (Set.map startSituationFromGrammarRule rs) Set.empty
                 (situation, otherSituations) = Set.deleteFindMin situations
 
                 closure'' (Situation { afterDot = (Grammar.NTerm nt:_) }) =
-                    Set.map
-                        startSituationFromGrammarRule
-                        (Set.filter ((== Grammar.NTerm nt) . Grammar.lhs) rs)
+                    Set.filter
+                        (\s -> (symbol s == Grammar.NTerm nt) && not (s `Set.member` result))
+                        startSituations
+                        
                 closure'' _ = Set.empty
 
 goto ::
