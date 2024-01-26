@@ -133,6 +133,7 @@ Test-Suite slr-analyzer-test
     , testsuite/data/dirty-grammar.txt
     , testsuite/data/tanya-grammar.txt
     , testsuite/data/another-tanya-grammar.txt
+    , testsuite/data/new-grammar.txt
   hs-source-dirs: testsuite
   build-depends:
       base

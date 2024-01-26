@@ -51,8 +51,6 @@ tests =
                 Set.fromList
                     [ GrammarRule { lhs = NTerm "", rhs = [NTerm "S", End] }
                     , GrammarRule { lhs = NTerm "S" , rhs = [Term "a", NTerm "A"] }
-                    , GrammarRule { lhs = NTerm "A" , rhs = [Term "d"] } ]
-        ]
-    ]
+                    , GrammarRule { lhs = NTerm "A" , rhs = [Term "d"] } ] ] ]
 
 main = defaultMain tests

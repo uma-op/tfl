@@ -34,6 +34,9 @@ tests =
             test_analyze "cccccc" "testsuite/data/tanya-grammar.txt" True
         , testCase 
             "Another Tanya grammar good resolve" $
-            test_analyze "cccc" "testsuite/data/another-tanya-grammar.txt" True] ]
+            test_analyze "cccc" "testsuite/data/another-tanya-grammar.txt" True
+        , testCase
+            "New grammar good resolve" $
+            test_analyze "aabaaababa" "testsuite/data/new-grammar.txt" True ] ]
 
 main = defaultMain tests
