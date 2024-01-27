@@ -14,6 +14,25 @@ data SLRAnalyzer =
         { transitions :: Transitions.Transitions
         , stack :: GraphStack.GraphStack }
 
+instance Show SLRAnalyzer where
+    show
+        SLRAnalyzer
+            { transitions =
+                Transitions.Transitions
+                    { Transitions.states = states }
+            , stack = GraphStack.GraphStack { GraphStack.nodes = graph } } =
+                "digraph {\n"
+                ++ "\trankdir = \"LR\";\n"
+                ++ concatMap showNode (Map.keys graph)
+                ++ "}"
+        where
+            showNode n = "\t\"" ++ show' ++ "\";\n" ++ showEdges (graph Map.! n)
+                where
+                    show' = showState n
+                    show'' (n, s) = "\t\"" ++ show' ++ "\" -> \"" ++ showState n ++ "\" [label=\"" ++ show s ++ "\"];\n"
+                    showEdges = concatMap show''
+            showState n = "-" ++ show (GraphStack.position n) ++ "-\\n" ++ concatMap ((++ "\\n") . show) ((states Map.!) $ GraphStack.state n)
+
 initSLRAnalyzer table =
     SLRAnalyzer
         { transitions = table
@@ -29,21 +48,28 @@ initSLRAnalyzer table =
                 , GraphStack.position = 0
                 , GraphStack.block = 0 }
 
-analyze ::
-    String ->
-    Int ->
-    SLRAnalyzer ->
-    Bool
-analyze word iter analyzer
-    | iter == 0 = undefined
-    | Set.null $ GraphStack.tops $ stack analyzer = False
+data AnalyzerStatus = Failure | Success | InProccess deriving Eq
+
+getAnalyzerStatus analyzer
+    | Set.null $ GraphStack.tops $ stack analyzer = Failure
     | List.any
         ( List.any
             ((== Grammar.NTerm "") . snd)
         . ((GraphStack.nodes $ stack analyzer) Map.!))
-        (GraphStack.tops $ stack analyzer) = True
-    | otherwise =
+        (GraphStack.tops $ stack analyzer) = Success
+    | otherwise = InProccess
+
+analyze ::
+    String ->
+    Int ->
+    SLRAnalyzer ->
+    SLRAnalyzer
+analyze word iter analyzer =
+    if iter == 0 || getAnalyzerStatus analyzer /= InProccess then
+        analyzer
+    else
         analyze word (iter - 1) (analyzer { stack = List.foldl resolve (stack analyzer) (GraphStack.tops (stack analyzer)) })
+
     where
         failCondition = not (Set.null $ GraphStack.tops $ stack analyzer)
 
@@ -59,7 +85,7 @@ analyze word iter analyzer
                 blockedTopNode = topNode { GraphStack.block = GraphStack.lastBlocked stackWithBlockedNode }
                 stackWithBlockedNode = GraphStack.blockNode topNode gs
 
-                inputTerm = if List.null inputStack then Grammar.End else Grammar.Term [head inputStack] 
+                inputTerm = if List.null inputStack then Grammar.End else Grammar.Term [head inputStack]
                     where
                         inputStack = List.drop (GraphStack.position topNode) word
                 actions = Transitions.goByTerm inputTerm (GraphStack.state topNode) (transitions analyzer)

@@ -14,7 +14,9 @@ import Transitions
 
 test_analyze word =
     grammarTestFactory
-        ( analyze word (-1)
+        ( (== Success)
+        . getAnalyzerStatus
+        . analyze word (-1)
         . initSLRAnalyzer
         . buildTransitions
         . cleanGrammarRules

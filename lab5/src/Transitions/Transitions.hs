@@ -18,13 +18,13 @@ data Situation =
         { symbol :: Grammar.Symbol
         , beforeDot :: [Grammar.Symbol]
         , afterDot :: [Grammar.Symbol] }
-    deriving (Eq, Show)
+    deriving Eq
 
--- instance Show Situation where
---     show s =
---         show (symbol s)
---         ++ " ->" ++ (List.reverse (beforeDot s) >>= show)
---         ++ " ." ++ (afterDot s >>= show)
+instance Show Situation where
+    show s =
+        show (symbol s)
+        ++ " -> " ++ (List.reverse (beforeDot s) >>= show)
+        ++ "." ++ (afterDot s >>= show)
 
 instance Ord Situation where
     compare x y =
@@ -188,7 +188,9 @@ buildTransitions rules =
     buildTransitions'
         (Set.singleton 0)
         (Transitions
-            { states = Map.singleton 0 (closure (Set.map startSituationFromGrammarRule $ Set.filter ((== Grammar.NTerm "") . Grammar.lhs) rules) rules)
+            { states = Map.fromList
+                [ (-1, Set.map finalSituationFromGrammarRule $ Set.filter ((== Grammar.NTerm "") . Grammar.lhs) rules)
+                , (0, closure (Set.map startSituationFromGrammarRule $ Set.filter ((== Grammar.NTerm "") . Grammar.lhs) rules) rules) ]
             , table = Map.empty })
     where
         terms = Grammar.getTerms rules

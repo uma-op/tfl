@@ -12,9 +12,8 @@ import Text.ParserCombinators.Parsec
 data Symbol = NTerm { value :: String } | Term { value :: String } | End deriving Eq
 
 instance Show Symbol where
-    show (NTerm v) = " NTerm \"" ++ v ++ "\""
-    show (Term v) = " Term \"" ++ v ++ "\""
-    show End = " End"
+    show End = "$"
+    show s = if List.null $ value s then "_" else value s
 
 isTerm (NTerm t) = False
 isTerm (Term t) = True
