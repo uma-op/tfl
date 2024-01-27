@@ -18,13 +18,13 @@ data Situation =
         { symbol :: Grammar.Symbol
         , beforeDot :: [Grammar.Symbol]
         , afterDot :: [Grammar.Symbol] }
-    deriving Eq
+    deriving (Eq, Show)
 
-instance Show Situation where
-    show s =
-        show (symbol s)
-        ++ " ->" ++ (List.reverse (beforeDot s) >>= show)
-        ++ " ." ++ (afterDot s >>= show)
+-- instance Show Situation where
+--     show s =
+--         show (symbol s)
+--         ++ " ->" ++ (List.reverse (beforeDot s) >>= show)
+--         ++ " ." ++ (afterDot s >>= show)
 
 instance Ord Situation where
     compare x y =
@@ -70,9 +70,10 @@ finalSituationFromGrammarRule rule =
         , beforeDot = List.reverse $ Grammar.rhs rule
         , afterDot = [] }
 
-newtype Transitions =
+data Transitions =
     Transitions
-        { table :: Map.Map Int ( Map.Map Grammar.Symbol (Maybe.Maybe Int)
+        { states :: Map.Map Int (Set.Set Situation)
+        , table :: Map.Map Int ( Map.Map Grammar.Symbol (Maybe.Maybe Int)
                                , Map.Map Grammar.Symbol [Action] ) } deriving (Eq, Show)
 
 closure :: Set.Set Situation -> Set.Set Grammar.GrammarRule -> Set.Set Situation
@@ -173,47 +174,47 @@ goByNTerm ::
     Int ->             -- current state
     Transitions ->     -- transitions table
     Maybe.Maybe Int                -- go to action
-goByNTerm symbol state (Transitions table) = fst (table Map.! state) Map.! symbol
+goByNTerm symbol state (Transitions _ table) = fst (table Map.! state) Map.! symbol
 
 goByTerm ::
     Grammar.Symbol ->  -- term that we are following
     Int ->             -- current state
     Transitions ->     -- transitions table
     [Action]           -- go to actions
-goByTerm symbol state (Transitions table) = snd (table Map.! state) Map.! symbol
+goByTerm symbol state (Transitions _ table) = snd (table Map.! state) Map.! symbol
 
 buildTransitions :: Set.Set Grammar.GrammarRule -> Transitions
 buildTransitions rules =
     buildTransitions'
         (Set.singleton 0)
-        states
-        (Transitions { table = Map.empty })
+        (Transitions
+            { states = Map.singleton 0 (closure (Set.map startSituationFromGrammarRule $ Set.filter ((== Grammar.NTerm "") . Grammar.lhs) rules) rules)
+            , table = Map.empty })
     where
         terms = Grammar.getTerms rules
         nterms = Set.delete (Grammar.NTerm "") $ Grammar.getNTerms rules
         allSymbols = Set.union terms nterms
 
-        states = Set.singleton (0, closure (Set.map startSituationFromGrammarRule $ Set.filter ((== Grammar.NTerm "") . Grammar.lhs) rules) rules)
-
         follow' = follow rules
 
-        buildTransitions' statesToBuild states buildedTransitions =
+        buildTransitions' statesToBuild buildedTransitions =
             if Set.null statesToBuild then
                 buildedTransitions
             else
-                buildTransitions' (Set.union newStatesToBuild otherStatesToBuild) newStates newBuildedTransitions
+                buildTransitions' (Set.union newStatesToBuild otherStatesToBuild) newBuildedTransitions
             where
                 (stateToBuild, otherStatesToBuild) = Set.deleteFindMin statesToBuild
-                (newStatesToBuild, newStates, newBuildedTransitions) = buildState stateToBuild states buildedTransitions
+                (newStatesToBuild, newBuildedTransitions) = buildState stateToBuild buildedTransitions
 
-                buildState :: Int -> Set.Set (Int, Set.Set Situation) -> Transitions -> (Set.Set Int, Set.Set (Int, Set.Set Situation), Transitions)
-                buildState stateToBuild states buildedTransitions =
-                    ( Set.map fst onlyNewStates
-                    , newStates
-                    , buildedTransitions { table = Map.insert stateToBuild (gotos, actions) (table buildedTransitions) })
+                buildState :: Int -> Transitions -> (Set.Set Int, Transitions)
+                buildState stateToBuild buildedTransitions =
+                    ( onlyNewStates
+                    , buildedTransitions
+                        { states = newStates
+                        , table = Map.insert stateToBuild (gotos, actions) (table buildedTransitions) })
 
                     where
-                        stateSituations = snd $ Maybe.fromJust $ List.find ((== stateToBuild) . fst) states
+                        stateSituations = states buildedTransitions Map.! stateToBuild
                         gotoTransitions = Map.fromList $ List.foldr ((:) . (\nterm -> (nterm, goto stateSituations nterm rules))) [] nterms
 
                         (finalSituations, intermediateSituation) = Set.partition isFinalSituation stateSituations
@@ -237,19 +238,19 @@ buildTransitions rules =
 
                         actionTransitions = Map.unionWith (++) shiftTransitions reduceTransitions
 
-                        getState :: Set.Set Situation -> Set.Set (Int, Set.Set Situation) -> (Int, Set.Set (Int, Set.Set Situation))
+                        getState :: Set.Set Situation -> Map.Map Int (Set.Set Situation) -> (Int, Map.Map Int (Set.Set Situation))
                         getState s ss =
-                            case List.find ((== s) . snd) ss of
+                            case List.find ((== s) . snd) (Map.assocs ss) of
                                 Just (x, _) -> (x, ss)
                                 Nothing ->
-                                    let newState = fst (Set.findMax ss) + 1
-                                    in (newState, Set.insert (newState, s) ss)
+                                    let newState = fst (Map.findMax ss) + 1
+                                    in (newState, Map.insert newState s ss)
 
                         getActions ::
                             Map.Map Grammar.Symbol [Either Situation (Set.Set Situation)] ->
                             Map.Map Grammar.Symbol [Action] ->
-                            Set.Set (Int, Set.Set Situation) ->
-                            (Map.Map Grammar.Symbol [Action], Set.Set (Int, Set.Set Situation))
+                            Map.Map Int (Set.Set Situation) ->
+                            (Map.Map Grammar.Symbol [Action], Map.Map Int (Set.Set Situation))
                         getActions actionTransitions actions states =
                             if Map.null actionTransitions then
                                 (actions, states)
@@ -276,8 +277,8 @@ buildTransitions rules =
                         getGotos ::
                             Map.Map Grammar.Symbol (Set.Set Situation) ->
                             Map.Map Grammar.Symbol (Maybe.Maybe Int) ->
-                            Set.Set (Int, Set.Set Situation) ->
-                            (Map.Map Grammar.Symbol (Maybe.Maybe Int), Set.Set (Int, Set.Set Situation))
+                            Map.Map Int (Set.Set Situation) ->
+                            (Map.Map Grammar.Symbol (Maybe.Maybe Int), Map.Map Int (Set.Set Situation))
                         getGotos gotoTransitions gotos states =
                             if Map.null gotoTransitions then
                                 (gotos, states)
@@ -292,5 +293,8 @@ buildTransitions rules =
                                         getGotos ts (Map.insert transitionSymbol (Maybe.Just convertedGoto) gotos) newStates
 
 
-                        (gotos, (actions, newStates)) = Bifunctor.second (getActions actionTransitions Map.empty) (getGotos gotoTransitions Map.empty states)
-                        onlyNewStates = newStates Set.\\ states
+                        (gotos, (actions, newStates)) =
+                            Bifunctor.second
+                                (getActions actionTransitions Map.empty)
+                                (getGotos gotoTransitions Map.empty (states buildedTransitions))
+                        onlyNewStates = Map.keysSet newStates Set.\\ Map.keysSet (states buildedTransitions)

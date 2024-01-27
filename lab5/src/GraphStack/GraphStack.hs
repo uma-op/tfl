@@ -10,7 +10,6 @@ import qualified Data.Bifunctor as Bifunctor
 
 import qualified Grammar
 
-import qualified Debug.Trace as Trace
 
 data Node = Node
     { state :: Int
