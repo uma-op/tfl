@@ -15,6 +15,6 @@ parseDomino =
         lhs <- many $ noneOf "(,)\n"
         char ','
         rhs <- many $ noneOf "(,)\n"
-        char '('
+        char ')'
         return (lhs, rhs)
 
