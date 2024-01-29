@@ -74,6 +74,7 @@ makeSMT ms ns =
         [ SMT.header
         , mDefinitions
         , mAssertions
+        , mQuantityAssertion
         , mEquations
         , nDefinitions
         , nAssertions
@@ -82,6 +83,7 @@ makeSMT ms ns =
     where
         mDefinitions = List.map SMT.defineM $ Map.keys $ mlhs $ head ms
         mAssertions = List.map (SMT.assertGeZero . SMT.m) $ Map.keys $ mlhs $ head ms
+        mQuantityAssertion = [SMT.assertGtZero $ uncurry (List.foldl (SMT.binaryOp "+")) $ Maybe.fromJust $ List.uncons $ List.map SMT.m $ Map.keys $ mlhs $ head ms]
         mEquations = List.map (SMT.assert . smtMEquation) ms
             where
                 smtMEquation eq = SMT.binaryOp "=" (smtMPolynome $ Map.toList $ mlhs eq) (smtMPolynome $ Map.toList $ mrhs eq)
