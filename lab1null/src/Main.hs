@@ -21,7 +21,7 @@ data NEquation =
         , nrhs :: Map.Map (Int, Int) Int }
 
 getAlphabet :: [(String, String)] -> Set.Set Char
-getAlphabet = List.foldr (Set.union . Set.fromList . uncurry (++) ) Set.empty
+getAlphabet = Set.delete '_' $ List.foldr (Set.union . Set.fromList . uncurry (++) ) Set.empty
 
 
 buildEquations :: [(String, String)] -> ([MEquation], [NEquation])
@@ -61,8 +61,8 @@ buildEquations dominos = (Map.elems foldM, Map.elems foldN)
                     where
                         (l, r) =
                             Bifunctor.bimap
-                                ((\x -> List.zip x (tail x)) . (fst (enumeratedEquations Map.! d1) ++))
-                                ((\x -> List.zip x (tail x)) . (snd (enumeratedEquations Map.! d1) ++))
+                                ((\x -> List.zip x (tail x)) . (fst (enumeratedEquations Map.! d1) ++) . List.singleton . head)
+                                ((\x -> List.zip x (tail x)) . (snd (enumeratedEquations Map.! d1) ++) . List.singleton . head)
                                 (enumeratedEquations Map.! d2)
 
                         foldLN' m l = Map.update (Just . (\eq -> eq { nlhs = Map.update (Just . (+ 1)) (d1, d2) (nlhs eq) })) l m
@@ -99,6 +99,12 @@ makeSMT ms ns =
                 smtNPolynome = uncurry (List.foldr (SMT.binaryOp "+" . smtMProd)) . Bifunctor.first smtMProd . Maybe.fromJust . List.uncons
                     where
                         smtMProd = uncurry (SMT.binaryOp "*") . Bifunctor.bimap (uncurry SMT.n) show
+        nExtraEquation =
+            [uncurry (List.foldl (SMT.binaryOp "+")) $ Bifunctor.first (uncurry SMT.n) $ Maybe.fromJust $ List.uncons n0_]
+            ++ [uncurry (List.foldl (SMT.binaryOp "+")) $ Bifunctor.first (uncurry SMT.n) $ Maybe.fromJust $ List.uncons n_0]
+            where
+                n0_ = List.filter ((== 0) . fst) $ Map.keys $ nlhs $ head ns
+                n_0 = List.filter ((== 0) . snd) $ Map.keys $ nlhs $ head ns
 main =
     do
         args <- getArgs
@@ -113,6 +119,6 @@ main =
             Left e -> error ("Wrong file format: " ++ show e)
             Right p ->
                 do
-                    putStrLn $ unlines $ uncurry makeSMT $ buildEquations p
+                    putStrLn $ unlines $ uncurry makeSMT $ buildEquations (("_", "_") : p)
                     return ()
         return ()
