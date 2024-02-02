@@ -15,6 +15,8 @@ parens v = "(" ++ v ++  ")"
 
 assertGeZero v = assert $ binaryOp ">=" v "0"
 assertGtZero v = assert $ binaryOp ">" v "0"
+assertEqZero v = assert $ binaryOp "=" v "0"
+assertEqOne v = assert $ binaryOp "=" v "1"
 
 header = ["(set-logic QF_NIA)"]
 footer = ["(check-sat)", "(get-model)"]

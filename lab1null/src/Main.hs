@@ -1,3 +1,6 @@
+{-# LANGUAGE StrictData #-}
+ 
+
 module Main where
 
 import qualified Data.Map as Map
@@ -12,8 +15,8 @@ import System.Environment (getArgs)
 
 data MEquation =
     MEquation
-        { mlhs :: Map.Map Int Int
-        , mrhs :: Map.Map Int Int }
+        { mlhs :: !(Map.Map Int Int)
+        , mrhs :: !(Map.Map Int Int) }
 
 data NEquation =
     NEquation
@@ -21,7 +24,7 @@ data NEquation =
         , nrhs :: Map.Map (Int, Int) Int }
 
 getAlphabet :: [(String, String)] -> Set.Set Char
-getAlphabet = Set.delete '_' $ List.foldr (Set.union . Set.fromList . uncurry (++) ) Set.empty
+getAlphabet = Set.delete '_' . List.foldr (Set.union . Set.fromList . uncurry (++) ) Set.empty
 
 
 buildEquations :: [(String, String)] -> ([MEquation], [NEquation])
@@ -35,13 +38,13 @@ buildEquations dominos = (Map.elems foldM, Map.elems foldN)
             Map.fromSet
                 (const
                     MEquation
-                        { mlhs = Map.fromList [(i, 0) | i <- [0..lastDomino]]
-                        , mrhs = Map.fromList [(i, 0) | i <- [0..lastDomino]] })
+                        { mlhs = Map.fromList [(i, 0) | i <- [1..lastDomino]]
+                        , mrhs = Map.fromList [(i, 0) | i <- [1..lastDomino]] })
                 alphabet
         
-        foldM = List.foldl foldM' mes [0..lastDomino]
+        foldM = List.foldl' foldM' mes [1..lastDomino]
             where
-                foldM' m d = List.foldl foldRM' (List.foldl foldLM' m l) r
+                foldM' m d = List.foldl' foldRM' (List.foldl' foldLM' m l) r
                     where
                         (l, r) = enumeratedEquations Map.! d
                         foldLM' m l = Map.update (Just . (\eq -> eq { mlhs = Map.update (Just . (+ 1)) d (mlhs eq) })) l m
@@ -55,9 +58,9 @@ buildEquations dominos = (Map.elems foldM, Map.elems foldN)
                         , nrhs = Map.fromList $ [((i, j), 0) | i <- [0..lastDomino], j <- [0..lastDomino]] })
                 (Set.cartesianProduct alphabet alphabet)
 
-        foldN = List.foldl foldN' nes [(i, j) | i <- [0..lastDomino], j <- [0..lastDomino]]
+        foldN = List.foldl' foldN' nes [(i, j) | i <- [0..lastDomino], j <- [0..lastDomino]]
             where
-                foldN' m (d1, d2) = List.foldl foldRN' (List.foldl foldLN' m l) r
+                foldN' m (d1, d2) = List.foldl' foldRN' (List.foldl' foldLN' m l) r
                     where
                         (l, r) =
                             Bifunctor.bimap
@@ -79,11 +82,12 @@ makeSMT ms ns =
         , nDefinitions
         , nAssertions
         , nEquations
+        , nExtraEquations
         , SMT.footer ]
     where
         mDefinitions = List.map SMT.defineM $ Map.keys $ mlhs $ head ms
         mAssertions = List.map (SMT.assertGeZero . SMT.m) $ Map.keys $ mlhs $ head ms
-        mQuantityAssertion = [SMT.assertGtZero $ uncurry (List.foldl (SMT.binaryOp "+")) $ Maybe.fromJust $ List.uncons $ List.map SMT.m $ Map.keys $ mlhs $ head ms]
+        mQuantityAssertion = [SMT.assertGtZero $ uncurry (List.foldl' (SMT.binaryOp "+")) $ Maybe.fromJust $ List.uncons $ List.map SMT.m $ Map.keys $ mlhs $ head ms]
         mEquations = List.map (SMT.assert . smtMEquation) ms
             where
                 smtMEquation eq = SMT.binaryOp "=" (smtMPolynome $ Map.toList $ mlhs eq) (smtMPolynome $ Map.toList $ mrhs eq)
@@ -99,9 +103,9 @@ makeSMT ms ns =
                 smtNPolynome = uncurry (List.foldr (SMT.binaryOp "+" . smtMProd)) . Bifunctor.first smtMProd . Maybe.fromJust . List.uncons
                     where
                         smtMProd = uncurry (SMT.binaryOp "*") . Bifunctor.bimap (uncurry SMT.n) show
-        nExtraEquation =
-            [uncurry (List.foldl (SMT.binaryOp "+")) $ Bifunctor.first (uncurry SMT.n) $ Maybe.fromJust $ List.uncons n0_]
-            ++ [uncurry (List.foldl (SMT.binaryOp "+")) $ Bifunctor.first (uncurry SMT.n) $ Maybe.fromJust $ List.uncons n_0]
+        nExtraEquations =
+            [ SMT.assertEqZero $ uncurry (List.foldr (SMT.binaryOp "+" . uncurry SMT.n)) $ Bifunctor.first (uncurry SMT.n) $ Maybe.fromJust $ List.uncons n0_
+            , SMT.assertEqOne $ uncurry (List.foldr (SMT.binaryOp "+" . uncurry SMT.n)) $ Bifunctor.first (uncurry SMT.n) $ Maybe.fromJust $ List.uncons n_0 ]
             where
                 n0_ = List.filter ((== 0) . fst) $ Map.keys $ nlhs $ head ns
                 n_0 = List.filter ((== 0) . snd) $ Map.keys $ nlhs $ head ns
