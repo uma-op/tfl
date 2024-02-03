@@ -1,0 +1,43 @@
+Up to date
+digraph {
+	rankdir = "LR";
+	"-0-\n_ -> .S$\nS -> .TT\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n";
+	"-1-\nS -> T.T\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n";
+	"-1-\nS -> T.T\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n" -> "-0-\n_ -> .S$\nS -> .TT\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n" [label="T"];
+	"-5-\nS -> T.T\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n";
+	"-5-\nS -> T.T\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n" -> "-0-\n_ -> .S$\nS -> .TT\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n" [label="T"];
+	"-1-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n";
+	"-1-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" -> "-0-\n_ -> .S$\nS -> .TT\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n" [label="a"];
+	"-2-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n";
+	"-2-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" -> "-1-\nS -> T.T\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n" [label="a"];
+	"-2-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" -> "-1-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" [label="a"];
+	"-4-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n";
+	"-4-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" -> "-3-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> b.\nT -> b.Tb\n" [label="a"];
+	"-5-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n";
+	"-5-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" -> "-4-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" [label="a"];
+	"-6-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n";
+	"-6-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" -> "-5-\nS -> T.T\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n" [label="a"];
+	"-6-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" -> "-5-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" [label="a"];
+	"-8-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n";
+	"-8-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" -> "-7-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> b.\nT -> b.Tb\n" [label="a"];
+	"-10-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n";
+	"-10-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" -> "-9-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> b.\nT -> b.Tb\n" [label="a"];
+	"-3-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> b.\nT -> b.Tb\n";
+	"-3-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> b.\nT -> b.Tb\n" -> "-2-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" [label="b"];
+	"-7-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> b.\nT -> b.Tb\n";
+	"-7-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> b.\nT -> b.Tb\n" -> "-6-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" [label="b"];
+	"-9-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> b.\nT -> b.Tb\n";
+	"-9-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> b.\nT -> b.Tb\n" -> "-8-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" [label="b"];
+	"-8-\nS -> TT.\n";
+	"-8-\nS -> TT.\n" -> "-5-\nS -> T.T\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\n" [label="T"];
+	"-7-\nT -> aT.a\n";
+	"-7-\nT -> aT.a\n" -> "-2-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" [label="T"];
+	"-8-\nT -> aT.a\n";
+	"-8-\nT -> aT.a\n" -> "-5-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" [label="T"];
+	"-9-\nT -> aT.a\n";
+	"-9-\nT -> aT.a\n" -> "-8-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> a.\nT -> a.Ta\n" [label="T"];
+	"-8-\nT -> bT.b\n";
+	"-8-\nT -> bT.b\n" -> "-7-\nT -> .a\nT -> .aTa\nT -> .b\nT -> .bTb\nT -> b.\nT -> b.Tb\n" [label="T"];
+	"-9-\nT -> bTb.\n";
+	"-9-\nT -> bTb.\n" -> "-8-\nT -> bT.b\n" [label="b"];
+}

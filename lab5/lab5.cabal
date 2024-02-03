@@ -1,0 +1,161 @@
+cabal-version:      2.4
+name:               lab5
+version:            0.1.0.0
+
+author:             Arseniy Bannikov
+maintainer:         uma7op@gmail.com
+
+extra-source-files: CHANGELOG.md
+
+library uma-testing-utils
+  exposed-modules: TestingUtils
+  other-modules: Paths_lab5
+  autogen-modules: Paths_lab5
+  build-depends:
+      base
+    , filepath
+    , test-framework
+    , test-framework-hunit
+    , HUnit
+    , uma-grammar
+  hs-source-dirs: src/TestingUtils
+  default-language: Haskell2010
+
+library uma-grammar
+  exposed-modules: Grammar
+  build-depends:
+      base
+    , parsec
+    , containers
+  hs-source-dirs: src/Grammar
+  default-language: Haskell2010
+
+Test-Suite grammar-test
+  type: exitcode-stdio-1.0
+  main-is: tests/GrammarTest.hs
+  other-modules: Paths_lab5
+  autogen-modules: Paths_lab5
+  data-files:
+      testsuite/data/clear-grammar.txt
+    , testsuite/data/dirty-grammar.txt
+  build-depends: 
+      base 
+    , containers
+    , filepath
+    , test-framework
+    , test-framework-hunit
+    , HUnit
+    , uma-testing-utils
+    , uma-grammar
+  hs-source-dirs: testsuite
+  default-language: Haskell2010
+
+library uma-graph-stack
+  exposed-modules: GraphStack
+  build-depends:
+      base 
+    , containers
+    , uma-grammar
+  hs-source-dirs: src/GraphStack
+  default-language: Haskell2010
+
+Test-Suite graph-stack-test
+  type: exitcode-stdio-1.0
+  main-is: tests/GraphStackTest.hs
+  other-modules: Paths_lab5
+  autogen-modules: Paths_lab5
+  data-files:
+      testsuite/data/clear-grammar.txt
+    , testsuite/data/dirty-grammar.txt
+  build-depends: 
+      base 
+    , containers
+    , filepath
+    , test-framework
+    , test-framework-hunit
+    , HUnit
+    , uma-testing-utils
+    , uma-graph-stack
+    , uma-grammar
+  hs-source-dirs: testsuite
+  default-language: Haskell2010
+
+library uma-transitions
+  exposed-modules: Transitions
+  build-depends:
+      base
+    , containers
+    , uma-grammar
+  hs-source-dirs: src/Transitions
+  default-language: Haskell2010
+
+Test-Suite transitions-test
+  type: exitcode-stdio-1.0
+  main-is: tests/TransitionsTest.hs
+  other-modules: Paths_lab5
+  autogen-modules: Paths_lab5
+  data-files:
+      testsuite/data/clear-grammar.txt
+    , testsuite/data/dirty-grammar.txt
+    , testsuite/data/tanya-grammar.txt
+    , testsuite/data/another-tanya-grammar.txt
+  hs-source-dirs: testsuite
+  build-depends:
+      base
+    , filepath
+    , containers
+    , test-framework
+    , test-framework-hunit
+    , HUnit 
+    , uma-grammar
+    , uma-transitions
+    , uma-testing-utils
+  default-language: Haskell2010
+
+library uma-slr-analyzer
+  exposed-modules: SLRAnalyzer
+  build-depends:
+      base
+    , containers
+    , uma-grammar
+    , uma-graph-stack
+    , uma-transitions
+  hs-source-dirs: src/SLRAnalyzer
+  default-language: Haskell2010
+
+Test-Suite slr-analyzer-test
+  type: exitcode-stdio-1.0
+  main-is: tests/SLRAnalyzerTest.hs
+  other-modules: Paths_lab5
+  autogen-modules: Paths_lab5
+  data-files:
+      testsuite/data/clear-grammar.txt
+    , testsuite/data/dirty-grammar.txt
+    , testsuite/data/tanya-grammar.txt
+    , testsuite/data/another-tanya-grammar.txt
+    , testsuite/data/new-grammar.txt
+  hs-source-dirs: testsuite
+  build-depends:
+      base
+    , filepath
+    , test-framework
+    , test-framework-hunit
+    , HUnit 
+    , uma-testing-utils
+    , uma-grammar
+    , uma-transitions
+    , uma-slr-analyzer
+  default-language: Haskell2010
+
+executable lab5
+  main-is: Main.hs
+  build-depends:
+      base
+    , uma-grammar
+    , uma-transitions
+    , uma-graph-stack
+    , uma-slr-analyzer
+    , uma-testing-utils
+  hs-source-dirs:   src
+  default-language: Haskell2010
+
