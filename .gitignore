@@ -18,6 +18,8 @@ cabal.sandbox.config
 *.toc
 *.hp
 *.eventlog
+*.dot
+*.txt
 .stack-work/
 cabal.project.local
 cabal.project.local~
