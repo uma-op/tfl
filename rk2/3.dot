@@ -1,0 +1,41 @@
+digraph G {
+    node[shape = circle];
+
+    # (b*)*a
+    
+    m -> "m\'" [label = "b"];
+    "m\'" -> "n\'" [label = "*"];
+    "n\'" -> n [label = "a"];
+    m -> n [label = "a"];
+    "n\'" -> "m\'" [label = "b"];
+    
+    
+    # edge[arrowhead = diamond];
+        
+    q0 -> q1 -> q2 -> q3 [arrowhead = diamond];
+    
+    q2, q4, q5, q6, q7, q8 [shape = doublecircle];
+    
+    q4 -> q5 [arrowhead = diamond];
+    q5 -> q7 [arrowhead = diamond];
+    # q6:s -> q7:n [arrowhead = diamond];
+    # q7:s -> q8:n [arrowhead = diamond];
+    # q8:s -> q9:n [arrowhead = diamond];
+    
+    q1 -> q4 [label = "*"];
+    q2 -> q6 [label = "*"];
+    # q3:se -> q8:nw [label = "*"];
+    
+    q5 -> q4 [label = "*"];
+    
+    q7 -> q6 [label = "*"];
+    q6 -> q7 [arrowhead = diamond];
+    q7 -> q9 [arrowhead = diamond];
+    q9 -> q8 [label = "*"];
+    q8 -> q9 [arrowhead = diamond];
+    q3 -> q8 [label = "*"];
+    # q7:ne -> q6:se [label = "*"];
+    # q9:ne -> q8:se [label = "*"];
+
+}
+

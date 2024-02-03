@@ -1,0 +1,141 @@
+\documentclass[a4paper, 14pt]{extarticle}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english, russian]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{verbatim}
+\usepackage{indentfirst}
+
+\usepackage{tikz}  
+\usetikzlibrary {automata,positioning}
+
+\setcounter{secnumdepth}{0}
+\setlength{\parindent}{30pt}
+
+\begin{document}
+
+\begin{titlepage}
+  \begin{center}
+    \vspace*{1cm}
+
+    \Huge
+    \textbf{Теория формальных языков. Рубежный контроль №1}
+
+    \vspace{0.5cm}
+    \Large
+    Вариант №11
+
+    \vspace{1.5cm}
+
+    \textbf{Банников Арсений}
+
+    \vfill
+
+    \vspace{0.8cm}
+
+    \Large
+    Теоретическая информатика и компьютерные технологии\\
+    МГТУ им. Н.Э. Баумана\\
+    ноябрь 2023
+
+  \end{center}
+\end{titlepage}
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Задача 1}
+
+\subsection{Условие}
+Язык всех ref-слов c единственной памятью, которые порождают языки в которых есть слово $aa$. Алфавит $\{a, b, \mid, (, ), [_1, ]_1, \&1\}$
+
+\subsection{Решение}
+Работа кипит...
+
+\newpage
+
+\section{Задача 2}
+
+\subsection{Условие}
+Язык $\Biggl\{ w_1bbw_2 \mathbin{\Bigg|} w_1w_2 = w_3aw_4 \mathbin{\&} |w_3| = |w_4| \Biggr\}$
+
+\subsection{Решение}
+
+Исходный язык является недетерминированным КС. Соответствующий автомат:
+
+\begin{tikzpicture}[shorten >=1pt,node distance=2cm,on grid, auto]
+  \node[state,initial]  (q_0)                      {$q_0$};
+  \node[state]          (q_1) [above right=of q_0] {$q_1$};
+  \node[state]          (q_2) [      right=of q_1] {$q_2$};
+  \node[state]          (q_3) [      right=of q_2] {$q_3$};
+  \node[state,accepting](q_4) [below right=of q_3] {$q_4$};
+  \node[state]          (q_5) [below right=of q_0] {$q_5$};
+  \node[state]          (q_6) [      right=of q_5] {$q_6$};
+  \node[state]          (q_7) [      right=of q_6] {$q_7$};
+
+  \path[->] (q_0) edge [loop above] node {$\frac{\forall}{X \forall}$}    ()
+                  edge              node {$b$}                            (q_1)
+                  edge              node {$a$}                            (q_5)
+            (q_1) edge              node {$b$}                            (q_2)
+            (q_2) edge              node {$a$}                            (q_3)
+                  edge [loop above] node {$\frac{\forall}{X \forall}$}    ()
+            (q_3) edge              node {$\varepsilon, \frac{Z_0}{Z_0}$} (q_4)
+                  edge [loop above] node {$\frac{X}{\varepsilon}$}        ()
+            (q_5) edge              node {b}                              (q_6)
+                  edge [loop below] node {$\frac{X}{\varepsilon}$}        ()
+            (q_6) edge              node {b}                              (q_7)
+            (q_7) edge              node {$\varepsilon, \frac{Z_0}{Z_0}$} (q_4)
+                  edge [loop below] node {$\frac{X}{\varepsilon}$}        ();
+\end{tikzpicture}
+
+Докажем недетерминированность. Рассмотрим слова $w_1 = b^n a b^{n+2}$ и $w_2 = b^n a b^{n+2} a b^{2n+1}$. У них общий префикс $x = b^n a b^{n+1}$, и суффиксы $y = b$, $z = b a b^{2n+1}$ соответственно, начинающиеся с одной и той же буквы. Для упрощения доказательства выполним пересечение с $b^* a b^2 b^* (a b^*)?$. Если накачиваемый фрагмент в префиксе, то при любом разбиении $x$ слово $w_2$ "накачкой" можно вывести из языка --- теряется баланс букв справа и слева от $a$. При синхронной накачке вновь возникает дисбаланс числа букв, но уже в слове $w_1$.
+
+\newpage
+
+\section{Задача 3}
+
+\subsection{Условие}
+\begin{center}
+  \begin{tabular}{l}
+    $[S] \to [Pred]$ \\
+    $[Pred] \to =\_[Expr]\_[Expr]$ \\
+    $[Expr] \to [Op].[Expr]$ \\
+    $[Expr] \to [Op]\_[Val]$ \\
+    $[Op] \to Sq$ \\
+    $[Op] \to Double$ \\
+    $[Val] \to 1$ \\
+    $[Val] \to 1[Val]$
+  \end{tabular}
+  \begin{tabular}{l}
+    $;$ \\
+    $; Expr_1.val == Expr_2.val$ \\
+    $; Expr_0.val := (Op.fun)(Expr_1.val)$ \\
+    $; Expr.val := (Op.fun)(Val.val)$ \\
+    $; Op.fun := (\lambda x \to x^2)$ \\
+    $; Op.fun := (\lambda x \to x \cdot 2)$ \\
+    $; Val.val := 1$ \\
+    $; Val_0.val := (Val_1.val) \cdot 2 + 1$
+  \end{tabular}
+\end{center}
+
+\subsection{Решение}
+Опишем что происходит в данной грамматике. Очевидно, что:
+\begin{enumerate}
+    \item [1.] $Val$ --- некоторое двоичное число вида $2^n - 1, n > 0$
+    \item [2.] $Expr$ --- композиция функций $Sq$ и $Double$, примененная к значению $Val$
+    \item [3.] $Pred$ --- предикат проверяющий, что значение одного $Expr$ равно значению другого
+\end{enumerate}
+
+Язык является не КС.
+% Печально, но не пригодилось =(
+% Для начала докажем лемму, о том, что если $Expr.val$ равны, то равны и $Val$ в этих $Expr$. Возьмем два любых $Expr$, и проведем над каждым преобразования тождественные для $Expr.val$. Преобразование заключается в вынесении $Double$ из композиции влево, единственное ограничение - когда мы переносим $Double$ через $Sq$, то мы должны добавить к перенесенному $Double$ еще один, то есть $SqDouble \to DoubleDoubleSq$. Перенесем таким образом все $Double$ левее $Sq$. Очевидно, что если $Expr.val$ равны, то мы можем убрать все лишние $Double$ сохранив равенство. Убирать, очевидно, мы можем одинаковое количество. Допустим, что после преобразований у нас разное число $Double$ слева, в таком случае если убрать максимум возможных $Double$, то у какого то $Expr$ они останутся, это значит что один из $Expr.val$ (тот у которого останутся $Double$) будет четным, другой нечетным. Таким образом после преобразрований у каждого $Expr$ будет одинаковое число $Double$, которые мы уберем для упрощения, значит теперь у нас остались только композиции из $Sq$, уберем из по максимуму. Если их количество разное, то где то останутся лишние. Из этого следует, что $Expr$ с $Sq$ является полным квадратом, но $Expr$ без $Sq$ полным квадратом не является (исключением является $Val = 1$, но если $Val$ в $Expr$ не равны, то какой то из $Val > 1$ и очевидно этот $Val$ будет больше). 
+
+Рассмотрим слово $=\_Sq^nDouble^n\_1\_Sq^nDouble^n\_1$. Очевидно что мы не можем накачивать фрагменты содержащие $\_$, так как их количество всегда равно четырем. Далее заметим, что мы не можем выбрать фрагменты только из одного $Expr$, так как если до накачивания значения $Expr.val$ были равны, то после накачивания они будут, очевидно, не равны. Также мы не можем выбрать фрагмент содержащий 1, так как отрицательная накачка выведет слово из языка. Следовательно накачивать нужно фрагменты из разных $Expr$, а это очевидно будут: в левом $Expr$ --- $Double^{n_1}$, в правом $Expr$ --- $Sq^{n_3}$. Далее проведем некоторую положительную накачку $i$ ---  получим слово $=\_Sq^nDouble^{n_0 + in_1}\_1\_Sq^{n_2 + in_3}Double^n\_1$. Далее перенесем все $Double$ влево, для каждого $Expr$, получим слово $=\_Double^{(n_0 + in_1)^{2^n}}Sq^n\_1\_Double^{n^{2^{n_2 + in_3}}}Sq^{n_2 + in_3}\_1$. Заметим, что при достаточно больших $i$ количество $Double$ в $Expr$ справа больше чем в $Expr$ слева, что означает, что при разложении $Expr.val$ на простые множители мы получим для разных $Expr$ разное количество двоек, а значит $Expr.val$ перестанут быть равны и слово выйдет из языка. Таким образом мы никак не можем накачать данное слово. Из этого и следует, что язык не КС.
+\end{document}
+
