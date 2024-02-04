@@ -13,10 +13,12 @@ import qualified SMT
 import qualified Parser as P
 import System.Environment (getArgs)
 
+import Control.Composition
+
 data MEquation =
     MEquation
-        { mlhs :: !(Map.Map Int Int)
-        , mrhs :: !(Map.Map Int Int) }
+        { mlhs :: Map.Map Int Int
+        , mrhs :: Map.Map Int Int }
 
 data NEquation =
     NEquation
@@ -83,32 +85,45 @@ makeSMT ms ns =
         , nAssertions
         , nEquations
         , nExtraEquations
+        , mnEquatinos
         , SMT.footer ]
     where
         mDefinitions = List.map SMT.defineM $ Map.keys $ mlhs $ head ms
+
         mAssertions = List.map (SMT.assertGeZero . SMT.m) $ Map.keys $ mlhs $ head ms
-        mQuantityAssertion = [SMT.assertGtZero $ uncurry (List.foldl' (SMT.binaryOp "+")) $ Maybe.fromJust $ List.uncons $ List.map SMT.m $ Map.keys $ mlhs $ head ms]
+
+        mQuantityAssertion = [SMT.assert $ SMT.lt "0" $ SMT.addition $ List.map SMT.m $ Map.keys $ mlhs $ head ms]
+
         mEquations = List.map (SMT.assert . smtMEquation) ms
             where
-                smtMEquation eq = SMT.binaryOp "=" (smtMPolynome $ Map.toList $ mlhs eq) (smtMPolynome $ Map.toList $ mrhs eq)
-                smtMPolynome = uncurry (List.foldr (SMT.binaryOp "+" . smtMProd)) . Bifunctor.first smtMProd . Maybe.fromJust . List.uncons
-                    where
-                        smtMProd = uncurry (SMT.binaryOp "*") . Bifunctor.bimap SMT.m show
+                smtMEquation eq = SMT.eq (smtMPolynome $ Map.toList $ mlhs eq) (smtMPolynome $ Map.toList $ mrhs eq)
+                smtMPolynome = SMT.addition . List.filter (not . List.null) . List.map (uncurry SMT.production . Bifunctor.first SMT.m)
 
         nDefinitions = List.map (uncurry SMT.defineN) $ Map.keys $ nlhs $ head ns
+
         nAssertions = List.map (SMT.assertGeZero . uncurry SMT.n) $ Map.keys $ nlhs $ head ns
+
         nEquations = List.map (SMT.assert . smtNEquation) ns
             where
-                smtNEquation eq = SMT.binaryOp "=" (smtNPolynome $ Map.toList $ nlhs eq) (smtNPolynome $ Map.toList $ nrhs eq)
-                smtNPolynome = uncurry (List.foldr (SMT.binaryOp "+" . smtMProd)) . Bifunctor.first smtMProd . Maybe.fromJust . List.uncons
-                    where
-                        smtMProd = uncurry (SMT.binaryOp "*") . Bifunctor.bimap (uncurry SMT.n) show
+                smtNEquation eq = SMT.eq (smtNPolynome $ Map.toList $ nlhs eq) (smtNPolynome $ Map.toList $ nrhs eq)
+                smtNPolynome = SMT.addition . List.filter (not . List.null) . List.map (uncurry SMT.production . Bifunctor.first (uncurry SMT.n))
+
         nExtraEquations =
-            [ SMT.assertEqZero $ uncurry (List.foldr (SMT.binaryOp "+" . uncurry SMT.n)) $ Bifunctor.first (uncurry SMT.n) $ Maybe.fromJust $ List.uncons n0_
-            , SMT.assertEqOne $ uncurry (List.foldr (SMT.binaryOp "+" . uncurry SMT.n)) $ Bifunctor.first (uncurry SMT.n) $ Maybe.fromJust $ List.uncons n_0 ]
+            [ SMT.assert $ SMT.eq "0" $ SMT.addition $ List.map (uncurry SMT.n) n0_
+            , SMT.assert $ SMT.eq "1" $ SMT.addition $ List.map (uncurry SMT.n) n_0 ]
             where
                 n0_ = List.filter ((== 0) . fst) $ Map.keys $ nlhs $ head ns
                 n_0 = List.filter ((== 0) . snd) $ Map.keys $ nlhs $ head ns
+
+        mnEquatinos =
+          [ SMT.assert
+              $ SMT.binaryOp "="
+                  (SMT.addition $ List.map SMT.m m_)
+                  (SMT.addition ("1" : List.map (uncurry SMT.n) n_)) ]
+            where
+                m_ = Map.keys $ mlhs $ head ms
+                n_ = List.filter (uncurry (&&) . ((/= 0) +>)) $ Map.keys $ nlhs $ head ns
+
 main =
     do
         args <- getArgs
