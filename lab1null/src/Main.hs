@@ -24,7 +24,7 @@ data NEquation =
         , nrhs :: Map.Map (Int, Int) Int }
 
 getAlphabet :: [(String, String)] -> Set.Set Char
-getAlphabet = Set.delete '_' . List.foldr (Set.union . Set.fromList . uncurry (++) ) Set.empty
+getAlphabet = Set.delete '(' . Set.delete ')' . List.foldr (Set.union . Set.fromList . uncurry (++) ) Set.empty
 
 
 buildEquations :: [(String, String)] -> ([MEquation], [NEquation])
@@ -38,11 +38,11 @@ buildEquations dominos = (Map.elems foldM, Map.elems foldN)
             Map.fromSet
                 (const
                     MEquation
-                        { mlhs = Map.fromList [(i, 0) | i <- [1..lastDomino]]
-                        , mrhs = Map.fromList [(i, 0) | i <- [1..lastDomino]] })
+                        { mlhs = Map.fromList [(i, 0) | i <- [2..lastDomino]]
+                        , mrhs = Map.fromList [(i, 0) | i <- [2..lastDomino]] })
                 alphabet
         
-        foldM = List.foldl' foldM' mes [1..lastDomino]
+        foldM = List.foldl' foldM' mes [2..lastDomino]
             where
                 foldM' m d = List.foldl' foldRM' (List.foldl' foldLM' m l) r
                     where
@@ -108,10 +108,15 @@ makeSMT ms ns =
 
         nExtraEquations =
             [ SMT.assert $ SMT.eq "1" $ SMT.addition $ List.map (uncurry SMT.n) n0_
-            , SMT.assert $ SMT.eq "1" $ SMT.addition $ List.map (uncurry SMT.n) n_0 ]
+            , SMT.assert $ SMT.eq "0" $ SMT.addition $ List.map (uncurry SMT.n) n_0
+            , SMT.assert $ SMT.eq "0" $ SMT.addition $ List.map (uncurry SMT.n) n1_
+            , SMT.assert $ SMT.eq "1" $ SMT.addition $ List.map (uncurry SMT.n) n_1 ]
             where
-                n0_ = List.filter ((== 0) . fst) $ Map.keys $ nlhs $ head ns
-                n_0 = List.filter ((== 0) . snd) $ Map.keys $ nlhs $ head ns
+                allN = Map.keys $ nlhs $ head ns
+                n0_ = List.filter ((== 0) . fst) $ List.filter ((> 1) . snd) allN
+                n_0 = List.filter ((== 0) . snd) $ List.filter ((> 1) . fst) allN 
+                n1_ = List.filter ((== 1) . fst) $ List.filter ((> 1) . snd) allN 
+                n_1 = List.filter ((== 1) . snd) $ List.filter ((> 1) . fst) allN 
 
         mnEquatinos = List.map SMT.assert (List.foldr ((:) . mEq) [] m_ ++ List.foldr ((:) . mEq') [] m_)
             where
@@ -134,6 +139,6 @@ main =
             Left e -> error ("Wrong file format: " ++ show e)
             Right p ->
                 do
-                    putStrLn $ unlines $ uncurry makeSMT $ buildEquations (("_", "_") : p)
+                    putStrLn $ unlines $ uncurry makeSMT $ buildEquations (("(", "(") : (")", ")") : p)
                     return ()
         return ()

@@ -14,7 +14,11 @@ assert v = "(assert " ++ v ++ ")"
 
 binaryOp op v1 v2 = "(" ++ op ++  " " ++ v1 ++ " " ++ v2 ++ ")" 
 
-eq = binaryOp "="
+eq [] [] = binaryOp "=" "0" "0"
+eq [] x = binaryOp "=" x "0"
+eq x [] = binaryOp "=" x "0"
+eq x y = binaryOp "=" x y
+
 ge = binaryOp ">="
 gt = binaryOp ">"
 lt = binaryOp "<"
@@ -25,9 +29,6 @@ production v k = binaryOp "*" v (show k)
 addition [] = ""
 addition [v] = v
 addition vs = parens $ List.concat $ "+" : List.map (' ':) vs
-
-nPolynome = undefined
-mPolynome = undefined
 
 parens v = "(" ++ v ++  ")"
 
