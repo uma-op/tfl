@@ -13,8 +13,6 @@ import qualified SMT
 import qualified Parser as P
 import System.Environment (getArgs)
 
-import Control.Composition
-
 data MEquation =
     MEquation
         { mlhs :: Map.Map Int Int
@@ -109,20 +107,18 @@ makeSMT ms ns =
                 smtNPolynome = SMT.addition . List.filter (not . List.null) . List.map (uncurry SMT.production . Bifunctor.first (uncurry SMT.n))
 
         nExtraEquations =
-            [ SMT.assert $ SMT.eq "0" $ SMT.addition $ List.map (uncurry SMT.n) n0_
+            [ SMT.assert $ SMT.eq "1" $ SMT.addition $ List.map (uncurry SMT.n) n0_
             , SMT.assert $ SMT.eq "1" $ SMT.addition $ List.map (uncurry SMT.n) n_0 ]
             where
                 n0_ = List.filter ((== 0) . fst) $ Map.keys $ nlhs $ head ns
                 n_0 = List.filter ((== 0) . snd) $ Map.keys $ nlhs $ head ns
 
-        mnEquatinos =
-          [ SMT.assert
-              $ SMT.binaryOp "="
-                  (SMT.addition $ List.map SMT.m m_)
-                  (SMT.addition ("1" : List.map (uncurry SMT.n) n_)) ]
+        mnEquatinos = List.map SMT.assert (List.foldr ((:) . mEq) [] m_ ++ List.foldr ((:) . mEq') [] m_)
             where
+                mEq m = SMT.eq (SMT.m m) (SMT.addition $ List.map (uncurry SMT.n) $ List.filter ((== m) . fst) n_)
+                mEq' m = SMT.eq (SMT.m m) (SMT.addition $ List.map (uncurry SMT.n) $ List.filter ((== m) . snd) n_)
                 m_ = Map.keys $ mlhs $ head ms
-                n_ = List.filter (uncurry (&&) . ((/= 0) +>)) $ Map.keys $ nlhs $ head ns
+                n_ = Map.keys $ nlhs $ head ns
 
 main =
     do

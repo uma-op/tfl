@@ -23,6 +23,7 @@ production v 0 = ""
 production v k = binaryOp "*" v (show k)
 
 addition [] = ""
+addition [v] = v
 addition vs = parens $ List.concat $ "+" : List.map (' ':) vs
 
 nPolynome = undefined
